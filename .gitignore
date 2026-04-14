@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+data/*.json
+!data/.gitkeep
+pdca_report_*.md
