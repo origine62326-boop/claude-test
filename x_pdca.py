@@ -21,7 +21,7 @@ import sys
 
 from modules import ui
 from modules.plan   import get_active_cycle
-from modules        import plan, do, check, act, report, content
+from modules        import plan, do, check, act, report, content, pipeline
 
 
 def main():
@@ -46,6 +46,7 @@ def main():
             ("A", "Act     - 改善 (課題・改善アクション)"),
             ("R", "Report  - レポート (サマリー・Export)"),
             ("I", "Idea    - コンテンツアイデア生成"),
+            ("F", "Flow    - エージェントパイプライン"),
             ("Q", "終了"),
         ])
 
@@ -61,6 +62,8 @@ def main():
             report.run()
         elif choice == "I":
             content.run()
+        elif choice == "F":
+            pipeline.run()
         elif choice == "Q":
             print(f"\n{ui.Color.DIM}X PDCA ツールを終了します。お疲れ様でした！{ui.Color.RESET}\n")
             sys.exit(0)
