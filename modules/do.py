@@ -23,6 +23,30 @@ POST_TYPES = [
     ("reply",   "リプライ"),
 ]
 
+# ノクト専用コンテンツカテゴリ
+CONTENT_CATEGORIES = [
+    ("reality",  "リアル体験（工場・夜勤の現実）"),
+    ("numbers",  "数字公開（インプレ・売上・フォロワー）"),
+    ("failure",  "失敗→改善ストーリー"),
+    ("ai",       "AI活用レポート"),
+    ("learning", "学び・気づき"),
+    ("journey",  "0→1ジャーニー"),
+    ("empathy",  "共感・応援"),
+]
+
+# フックタイプ
+HOOK_TYPES = [
+    ("number",   "数字フック（「〇〇日目」「〇〇円」）"),
+    ("empathy",  "共感フック（「わかる」「あるある」）"),
+    ("shock",    "衝撃フック（「正直に言う」「驚いた」）"),
+    ("question", "疑問フック（「なぜ〇〇なのか」）"),
+    ("declare",  "宣言フック（「やる」「変える」）"),
+    ("none",     "なし"),
+]
+
+CATEGORY_LABEL = {k: v for k, v in CONTENT_CATEGORIES}
+HOOK_LABEL     = {k: v for k, v in HOOK_TYPES}
+
 
 def _load_posts() -> list:
     return storage.load_list(POSTS_FILE)
@@ -91,7 +115,11 @@ def _log_post():
         ui.error("投稿内容は必須です")
         return
 
-    post_type = ui.menu("投稿タイプ", POST_TYPES)
+    post_type = ui.menu("投稿フォーマット", POST_TYPES)
+
+    ui.section("ノクト専用分類")
+    content_category = ui.menu("コンテンツカテゴリ", CONTENT_CATEGORIES)
+    hook_type        = ui.menu("フックタイプ", HOOK_TYPES)
 
     themes = cycle["content_plan"].get("themes", [])
     if themes:
@@ -111,6 +139,8 @@ def _log_post():
         "date": post_date,
         "content": content,
         "type": post_type,
+        "content_category": content_category,
+        "hook_type": hook_type,
         "theme": theme,
         "hashtags": hashtags,
         "url": url,
@@ -164,11 +194,14 @@ def _show_posts():
         return
 
     ui.section(title)
-    rows = [[p["id"], p["date"][:10], p["type"], p["content"][:25]] for p in filtered]
+    rows = [
+        [p["id"], p["date"][:10], p.get("content_category", p["type"]), p["content"][:25]]
+        for p in filtered
+    ]
     ui.table(
-        ["ID", "日付", "タイプ", "内容"],
+        ["ID", "日付", "カテゴリ", "内容"],
         rows,
-        [10, 12, 8, 27],
+        [10, 12, 10, 27],
     )
 
     show_id = ui.prompt("\n詳細表示するID (Enterでスキップ)")
@@ -206,7 +239,13 @@ def _print_post(post: dict):
     ui.section(f"投稿詳細: {post['id']}")
     print(f"  サイクル  : {post.get('cycle_name', post.get('cycle_id', '-'))}")
     print(f"  日時      : {post['date']}")
-    print(f"  タイプ    : {post['type']}")
+    print(f"  フォーマット: {post['type']}")
+    cat = post.get("content_category", "")
+    if cat:
+        print(f"  カテゴリ  : {CATEGORY_LABEL.get(cat, cat)}")
+    hook = post.get("hook_type", "")
+    if hook and hook != "none":
+        print(f"  フック    : {HOOK_LABEL.get(hook, hook)}")
     print(f"  内容      : {post['content']}")
     if post.get("theme"):
         print(f"  テーマ    : {post['theme']}")

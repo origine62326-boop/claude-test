@@ -49,19 +49,72 @@ def run():
     while True:
         choice = ui.menu("Plan メニュー", [
             ("1", "新しいPDCAサイクルを作成"),
-            ("2", "サイクル一覧を表示"),
-            ("3", "サイクルの目標を編集"),
+            ("2", "ノクト設定で週次サイクルを素早く作成"),
+            ("3", "サイクル一覧を表示"),
+            ("4", "サイクルの目標を編集"),
             ("0", "メインメニューに戻る"),
         ])
 
         if choice == "1":
             _create_cycle()
         elif choice == "2":
-            _show_cycles()
+            _create_noct_cycle()
         elif choice == "3":
+            _show_cycles()
+        elif choice == "4":
             _edit_cycle()
         elif choice == "0":
             break
+
+
+def _create_noct_cycle():
+    """ノクト (@noct_zero) のデフォルト設定で週次サイクルを素早く作成"""
+    ui.section("ノクト週次サイクル - クイック作成")
+    ui.info("@noct_zero のデフォルト設定で今週のサイクルを作成します")
+
+    from datetime import timedelta
+    today = ui.today_str()
+    end   = (datetime.strptime(today, "%Y-%m-%d") + timedelta(days=6)).strftime("%Y-%m-%d")
+
+    # 週番号を自動でサイクル名に
+    dt   = datetime.strptime(today, "%Y-%m-%d")
+    week = dt.isocalendar()[1]
+    name = ui.prompt(f"サイクル名", f"{dt.year}年 第{week}週 週次運用")
+
+    ui.section("KPI目標 (Enterで推奨値を使用)")
+    target_posts       = ui.prompt_int("目標投稿数 (件/週)", 7)
+    target_followers   = ui.prompt_int("目標フォロワー増加数", 10)
+    target_impressions = ui.prompt_int("目標インプレッション合計", 5000)
+    target_eng_rate    = ui.prompt_float("目標エンゲージメント率 (%)", 3.0)
+
+    memo = ui.prompt("今週の戦略メモ (任意)")
+
+    cycle = {
+        "id": str(uuid.uuid4())[:8],
+        "name": name,
+        "start_date": today,
+        "end_date": end,
+        "status": "active",
+        "created_at": ui.now_str(),
+        "goals": {
+            "posts": target_posts,
+            "followers_gain": target_followers,
+            "impressions": target_impressions,
+            "engagement_rate": target_eng_rate,
+        },
+        "content_plan": {
+            "themes": ["リアル体験", "数字公開", "失敗→改善", "AI活用", "共感・応援"],
+            "hashtags": ["#副業", "#工場勤務", "#AI活用", "#0から1", "#夜勤副業"],
+        },
+        "memo": memo,
+    }
+
+    cycles = _load_cycles()
+    cycles.append(cycle)
+    _save_cycles(cycles)
+
+    ui.success(f"サイクル '{name}' を作成しました (ID: {cycle['id']})")
+    _print_cycle(cycle)
 
 
 def _create_cycle():

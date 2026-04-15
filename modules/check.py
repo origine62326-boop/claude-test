@@ -11,7 +11,7 @@ import uuid
 
 from . import storage, ui
 from .plan import get_active_cycle, list_cycles, get_cycle_by_id
-from .do import get_posts_for_cycle
+from .do import get_posts_for_cycle, CONTENT_CATEGORIES, HOOK_TYPES, CATEGORY_LABEL, HOOK_LABEL
 
 
 METRICS_FILE  = "metrics.json"
@@ -236,15 +236,52 @@ def _show_achievement():
     else:
         ui.info("フォロワー: 記録なし")
 
-    # --- 投稿タイプ内訳 ---
+    # --- コンテンツカテゴリ内訳 ---
     if posts:
-        ui.section("投稿タイプ内訳")
-        type_counts: dict[str, int] = {}
+        ui.section("コンテンツカテゴリ内訳")
+        cat_counts: dict[str, int] = {}
         for p in posts:
-            type_counts[p["type"]] = type_counts.get(p["type"], 0) + 1
-        for t, cnt in sorted(type_counts.items(), key=lambda x: -x[1]):
-            bar = "█" * cnt
-            print(f"  {t:8} : {bar} ({cnt}件)")
+            cat = p.get("content_category", "未分類")
+            cat_counts[cat] = cat_counts.get(cat, 0) + 1
+        for cat, cnt in sorted(cat_counts.items(), key=lambda x: -x[1]):
+            label = CATEGORY_LABEL.get(cat, cat)
+            bar   = "█" * cnt
+            print(f"  {label[:18]:18} : {bar} ({cnt}件)")
+
+    # --- フックタイプ内訳 ---
+    if posts:
+        hook_counts: dict[str, int] = {}
+        for p in posts:
+            h = p.get("hook_type", "")
+            if h and h != "none":
+                hook_counts[h] = hook_counts.get(h, 0) + 1
+        if hook_counts:
+            ui.section("フックタイプ内訳")
+            for h, cnt in sorted(hook_counts.items(), key=lambda x: -x[1]):
+                label = HOOK_LABEL.get(h, h)
+                bar   = "█" * cnt
+                print(f"  {label[:18]:18} : {bar} ({cnt}件)")
+
+    # --- カテゴリ別エンゲージメント分析 ---
+    if metrics and posts:
+        post_map = {p["id"]: p for p in posts}
+        cat_metrics: dict[str, list] = {}
+        for m in metrics:
+            post  = post_map.get(m["post_id"])
+            cat   = post.get("content_category", "未分類") if post else "未分類"
+            cat_metrics.setdefault(cat, []).append(m["engagement_rate"])
+        if cat_metrics:
+            ui.section("カテゴリ別 平均エンゲージメント率")
+            ranked = sorted(
+                cat_metrics.items(),
+                key=lambda x: sum(x[1]) / len(x[1]),
+                reverse=True,
+            )
+            for cat, rates in ranked:
+                avg  = round(sum(rates) / len(rates), 2)
+                label = CATEGORY_LABEL.get(cat, cat)
+                color = ui.Color.GREEN if avg >= 3.0 else (ui.Color.YELLOW if avg >= 1.5 else ui.Color.RED)
+                print(f"  {label[:20]:20} : {color}{avg}%{ui.Color.RESET}  ({len(rates)}件)")
 
     # --- Top3 投稿 ---
     if metrics:
