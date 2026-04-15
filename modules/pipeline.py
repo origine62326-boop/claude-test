@@ -13,7 +13,7 @@
 """
 
 import uuid
-from . import storage, ui
+from . import storage, ui, ai_agent
 from .plan import get_active_cycle
 from .do import CONTENT_CATEGORIES, HOOK_TYPES, CATEGORY_LABEL, HOOK_LABEL
 
@@ -76,7 +76,11 @@ def _get_all_drafts() -> list:
 
 def run():
     ui.header("FLOW - エージェントパイプライン", ui.Color.YELLOW)
-    print(f"  {ui.Color.DIM}ハーマイオニー → ルーナ → マルフォイ → 承認 → ロン{ui.Color.RESET}\n")
+    print(f"  {ui.Color.DIM}ハーマイオニー → ルーナ → マルフォイ → 承認 → ロン{ui.Color.RESET}")
+    if ai_agent.AI_AVAILABLE:
+        print(f"  {ui.Color.GREEN}AI自動化: ON  (Claude API 接続済み){ui.Color.RESET}\n")
+    else:
+        print(f"  {ui.Color.YELLOW}AI自動化: OFF (ANTHROPIC_API_KEY を設定するとAI自動化が有効になります){ui.Color.RESET}\n")
 
     # 今日のステータスを簡易表示
     session = _today_session()
@@ -170,6 +174,20 @@ def _hermione():
         "created_at": ui.now_str(),
     }
 
+    # AI自動ブリーフィング生成
+    briefing = ""
+    if ai_agent.AI_AVAILABLE:
+        print(f"\n  {ui.Color.CYAN}ハーマイオニーが分析中...{ui.Color.RESET}")
+        try:
+            briefing = ai_agent.generate_briefing(theme, experience, numbers, emotion, news)
+            ui.section("AIブリーフィング（自動）")
+            print(f"{ui.Color.WHITE}{briefing}{ui.Color.RESET}")
+        except Exception as e:
+            ui.error(f"AI生成エラー: {e}")
+    else:
+        briefing = ui.prompt("ブリーフィングメモ（任意）")
+
+    session["briefing"] = briefing
     sessions.append(session)
     _save(sessions)
     ui.success(f"ブリーフィングを作成しました")
@@ -200,15 +218,59 @@ def _luna():
     if existing_drafts:
         ui.info(f"既存の投稿案: {len(existing_drafts)}件")
 
-    ui.section("新しい投稿案を作成")
+    content_category = ui.menu("コンテンツカテゴリ", CONTENT_CATEGORIES)
+    hook_type        = ui.menu("フックタイプ", HOOK_TYPES)
 
+    # AI自動生成 or 手動入力
+    if ai_agent.AI_AVAILABLE:
+        print(f"\n  {ui.Color.CYAN}ルーナが投稿案を3パターン生成中...{ui.Color.RESET}")
+        try:
+            briefing = session.get("briefing", session.get("theme", ""))
+            ai_drafts = ai_agent.generate_drafts(
+                session["theme"], briefing, content_category, hook_type
+            )
+            new_drafts = []
+            times      = iter(POST_TIMES)
+            for i, draft_text in enumerate(ai_drafts, 1):
+                ui.section(f"パターン {i}")
+                print(f"{ui.Color.WHITE}{draft_text}{ui.Color.RESET}\n")
+                use = ui.prompt(f"パターン{i}を採用しますか？ (y/n)", "y")
+                if use.lower() == "y":
+                    post_time = next(times, POST_TIMES[-1])
+                    post_time = ui.prompt("投稿予定時刻", post_time)
+                    new_drafts.append({
+                        "id":               str(uuid.uuid4())[:8],
+                        "content":          draft_text,
+                        "content_category": content_category,
+                        "hook_type":        hook_type,
+                        "post_time":        post_time,
+                        "status":           "draft",
+                        "memo":             "AI生成",
+                        "check_results":    {},
+                        "check_notes":      "",
+                        "approved_at":      "",
+                        "published_at":     "",
+                        "created_at":       ui.now_str(),
+                    })
+            if new_drafts:
+                sessions = _load()
+                for s in sessions:
+                    if s["id"] == session["id"]:
+                        s.setdefault("drafts", []).extend(new_drafts)
+                        break
+                _save(sessions)
+                ui.success(f"{len(new_drafts)}件の投稿案を追加しました")
+                ui.info("次: マルフォイで品質チェックをしてください")
+            return
+        except Exception as e:
+            ui.error(f"AI生成エラー: {e} → 手動入力に切り替えます")
+
+    # 手動入力モード
+    ui.section("投稿内容を手動入力")
     content = ui.prompt("投稿内容（本文）")
     if not content:
         ui.error("投稿内容は必須です")
         return
-
-    content_category = ui.menu("コンテンツカテゴリ", CONTENT_CATEGORIES)
-    hook_type        = ui.menu("フックタイプ", HOOK_TYPES)
 
     post_time = ui.menu("投稿予定時刻", [(t, t) for t in POST_TIMES])
     memo      = ui.prompt("メモ（任意）")
@@ -267,38 +329,92 @@ def _malfoy():
     print(f"  カテゴリ: {CATEGORY_LABEL.get(target.get('content_category',''), '-')}")
     print(f"  フック  : {HOOK_LABEL.get(target.get('hook_type',''), '-')}\n")
 
-    ui.section("品質チェック（y=合格 / n=不合格）")
-    results = {}
-    passed  = 0
-    for key, label in QUALITY_CHECKS:
-        ans = ui.prompt(f"  {label}", "y")
-        results[key] = ans.lower() == "y"
-        if results[key]:
-            passed += 1
+    # AI自動チェック or 手動チェック
+    results    = {}
+    score      = 0
+    notes      = ""
+    new_status = "draft"
 
-    total  = len(QUALITY_CHECKS)
-    score  = round(passed / total * 100)
-    color  = ui.Color.GREEN if score >= 80 else (ui.Color.YELLOW if score >= 60 else ui.Color.RED)
-    print(f"\n  品質スコア: {color}{score}% ({passed}/{total}){ui.Color.RESET}")
+    if ai_agent.AI_AVAILABLE:
+        print(f"  {ui.Color.CYAN}マルフォイがAI審査中...{ui.Color.RESET}\n")
+        try:
+            check = ai_agent.check_quality(target["content"])
+            results = check["results"]
+            score   = check["score"]
+            notes   = check.get("improvement", "")
 
-    notes = ui.prompt("マルフォイのコメント（改善点など）")
+            # 結果表示
+            ui.section("AI審査結果")
+            for key, label in QUALITY_CHECKS:
+                ok    = results.get(key, True)
+                mark  = f"{ui.Color.GREEN}✓{ui.Color.RESET}" if ok else f"{ui.Color.RED}✗{ui.Color.RESET}"
+                print(f"  {mark} {label}")
 
-    if score >= 80:
-        new_status = "checked"
-        ui.success("合格！承認キューに進みます")
-    else:
-        retry = ui.prompt("再修正に戻しますか？ (y=要修正 / n=強制合格)", "y")
-        new_status = "rejected" if retry.lower() == "y" else "checked"
-        if new_status == "rejected":
-            ui.info("要修正としてルーナに差し戻しました")
+            color = ui.Color.GREEN if score >= 80 else (ui.Color.YELLOW if score >= 60 else ui.Color.RED)
+            print(f"\n  品質スコア: {color}{score}/100{ui.Color.RESET}")
+            if notes and notes != "なし":
+                print(f"\n  {ui.Color.YELLOW}マルフォイの改善案:{ui.Color.RESET}")
+                print(f"  {notes}")
+
+            if score >= 80:
+                new_status = "checked"
+                ui.success("合格！承認キューに進みます")
+            else:
+                choice = ui.menu("判断", [
+                    ("rewrite", "AIに書き直してもらう（自動）"),
+                    ("manual",  "自分で修正する（要修正に戻す）"),
+                    ("force",   "このまま強制合格"),
+                ])
+                if choice == "rewrite":
+                    weak = [label for key, label in QUALITY_CHECKS if not results.get(key, True)]
+                    print(f"  {ui.Color.CYAN}ルーナが書き直し中...{ui.Color.RESET}")
+                    rewritten = ai_agent.rewrite_post(target["content"], weak)
+                    ui.section("書き直し後")
+                    print(f"{ui.Color.WHITE}{rewritten}{ui.Color.RESET}")
+                    use = ui.prompt("この内容で採用しますか？ (y/n)", "y")
+                    if use.lower() == "y":
+                        target["content"] = rewritten
+                        new_status = "checked"
+                        ui.success("書き直し版で合格しました")
+                    else:
+                        new_status = "rejected"
+                elif choice == "manual":
+                    new_status = "rejected"
+                    ui.info("要修正に戻しました")
+                else:
+                    new_status = "checked"
+                    ui.info("強制合格にしました")
+        except Exception as e:
+            ui.error(f"AI審査エラー: {e} → 手動チェックに切り替えます")
+            ai_agent.AI_AVAILABLE = False  # このセッションは手動に
+
+    if not ai_agent.AI_AVAILABLE or not results:
+        # 手動チェック
+        ui.section("品質チェック（y=合格 / n=不合格）")
+        passed = 0
+        for key, label in QUALITY_CHECKS:
+            ans = ui.prompt(f"  {label}", "y")
+            results[key] = ans.lower() == "y"
+            if results[key]:
+                passed += 1
+        total  = len(QUALITY_CHECKS)
+        score  = round(passed / total * 100)
+        color  = ui.Color.GREEN if score >= 80 else (ui.Color.YELLOW if score >= 60 else ui.Color.RED)
+        print(f"\n  品質スコア: {color}{score}% ({passed}/{total}){ui.Color.RESET}")
+        notes = ui.prompt("マルフォイのコメント（改善点など）")
+        if score >= 80:
+            new_status = "checked"
+            ui.success("合格！承認キューに進みます")
         else:
-            ui.info("強制合格にしました")
+            retry = ui.prompt("再修正に戻しますか？ (y=要修正 / n=強制合格)", "y")
+            new_status = "rejected" if retry.lower() == "y" else "checked"
 
     # データ更新
     sessions = _load()
     for s in sessions:
         for d in s.get("drafts", []):
             if d["id"] == draft_id:
+                d["content"]       = target["content"]
                 d["status"]        = new_status
                 d["check_results"] = results
                 d["check_notes"]   = notes
@@ -447,17 +563,26 @@ def _snape():
         # 改善提案
         if weak_points:
             ui.section("スネイプの改善提案")
-            suggestions = {
-                "ノクトらしい声・語尾になっている": "→ 投稿前に「俺ならこう言う？」と自分に問いかけてみてください",
-                "冒頭にフックがある（数字・共感・衝撃など）": "→ 1行目だけ書き直す練習を毎日1投稿でやってみてください",
-                "具体的な数字や体験が入っている": "→ 「なんとなく」を「○時間」「○円」「○日目」に変えてください",
-                "読者が「自分も」と共感できる内容": "→ 「自分の話」ではなく「読者も経験する話」になってるか確認",
-                "投稿として適切な長さ（長すぎない）": "→ スマホ1画面に収まるか目視確認してください",
-                "空白・改行が読みやすい": "→ 3行以上続いたら改行を入れるルールを徹底してください",
-            }
-            for wp in weak_points:
-                print(f"  {ui.Color.RED}弱点:{ui.Color.RESET} {wp}")
-                print(f"         {suggestions.get(wp, '')}\n")
+            if ai_agent.AI_AVAILABLE:
+                print(f"  {ui.Color.CYAN}スネイプがAI分析中...{ui.Color.RESET}")
+                try:
+                    summary = f"総投稿数:{total}, チェック済:{total_checked}, 弱点項目:{len(weak_points)}個"
+                    ai_suggestions = ai_agent.generate_snape_report(summary, weak_points)
+                    print(f"\n{ui.Color.WHITE}{ai_suggestions}{ui.Color.RESET}")
+                except Exception as e:
+                    ui.error(f"AI分析エラー: {e}")
+            else:
+                static = {
+                    "ノクトらしい声・語尾になっている": "→ 投稿前に「俺ならこう言う？」と自問してみてください",
+                    "冒頭にフックがある（数字・共感・衝撃など）": "→ 1行目だけ書き直す練習を毎日1投稿でやってみてください",
+                    "具体的な数字や体験が入っている": "→ 「なんとなく」を「○時間」「○円」「○日目」に変えてください",
+                    "読者が「自分も」と共感できる内容": "→ 「自分の話」ではなく「読者も経験する話」か確認してください",
+                    "投稿として適切な長さ（長すぎない）": "→ スマホ1画面に収まるか目視確認してください",
+                    "空白・改行が読みやすい": "→ 3行以上続いたら改行を入れるルールを徹底してください",
+                }
+                for wp in weak_points:
+                    print(f"  {ui.Color.RED}弱点:{ui.Color.RESET} {wp}")
+                    print(f"         {static.get(wp, '')}\n")
 
     # 今日の進捗チェック
     today   = ui.today_str()
