@@ -149,14 +149,28 @@ def _hermione():
         ui.error("テーマは必須です")
         return
 
-    ui.section("リサーチインプット（自分の体験・気づきを入力）")
-    print(f"  {ui.Color.DIM}箇条書きでOK。AIへの指示のように書く必要はありません。{ui.Color.RESET}")
-    experience = ui.prompt("今日の体験・出来事（任意）")
-    numbers    = ui.prompt("出せる数字があれば（インプレ・時間・金額など）（任意）")
-    emotion    = ui.prompt("今の気持ち・感情（任意）")
-    news       = ui.prompt("関連するニュース・トレンド（任意）")
+    # ─── Webリサーチ（自動・APIキー不要）───
+    research_data = None
+    print(f"\n  {ui.Color.CYAN}ハーマイオニーがニュースを自動収集中...{ui.Color.RESET}")
+    try:
+        research_data = ai_agent.research_web()
+        ui.section("収集したトレンド・ニュース（自動）")
+        for cat, articles in research_data.items():
+            print(f"  {ui.Color.YELLOW}【{cat}】{ui.Color.RESET}")
+            for a in articles:
+                if a["title"] and not a["title"].startswith("取得失敗"):
+                    print(f"    ・{a['title'][:55]}  {ui.Color.DIM}({a['date']}){ui.Color.RESET}")
+    except Exception as e:
+        print(f"  {ui.Color.DIM}ニュース収集スキップ: {e}{ui.Color.RESET}")
 
-    active = get_active_cycle()
+    # ─── 自分の体験インプット ───
+    ui.section("自分の体験・気づきを入力（Enterでスキップ可）")
+    print(f"  {ui.Color.DIM}箇条書きでOK{ui.Color.RESET}")
+    experience = ui.prompt("今日の体験・出来事（任意）")
+    numbers    = ui.prompt("出せる数字（インプレ・時間・金額など）（任意）")
+    emotion    = ui.prompt("今の気持ち・感情（任意）")
+
+    active   = get_active_cycle()
     cycle_id = active["id"] if active else ""
 
     session = {
@@ -168,24 +182,27 @@ def _hermione():
             "experience": experience,
             "numbers":    numbers,
             "emotion":    emotion,
-            "news":       news,
+            "web":        ai_agent.format_research(research_data) if research_data else "",
         },
         "drafts": [],
         "created_at": ui.now_str(),
     }
 
-    # AI自動ブリーフィング生成
+    # ─── AI自動ブリーフィング生成 ───
     briefing = ""
     if ai_agent.AI_AVAILABLE:
-        print(f"\n  {ui.Color.CYAN}ハーマイオニーが分析中...{ui.Color.RESET}")
+        print(f"\n  {ui.Color.CYAN}ハーマイオニーがブリーフィングを生成中...{ui.Color.RESET}")
         try:
-            briefing = ai_agent.generate_briefing(theme, experience, numbers, emotion, news)
+            briefing = ai_agent.generate_briefing(
+                theme, experience, numbers, emotion, "", research_data
+            )
             ui.section("AIブリーフィング（自動）")
             print(f"{ui.Color.WHITE}{briefing}{ui.Color.RESET}")
         except Exception as e:
             ui.error(f"AI生成エラー: {e}")
     else:
-        briefing = ui.prompt("ブリーフィングメモ（任意）")
+        # APIなしでもリサーチ結果を表示済みなのでメモだけ
+        briefing = ui.prompt("今日の戦略メモ（任意）")
 
     session["briefing"] = briefing
     sessions.append(session)

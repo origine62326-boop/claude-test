@@ -1,17 +1,37 @@
 """
-AIエージェント - Claude API統合
-================================
+AIエージェント - Claude API統合 + Webリサーチ
+================================================
 各エージェントのAI自動化機能を提供する。
-ANTHROPIC_API_KEY が設定されている場合のみ動作する。
+ANTHROPIC_API_KEY が設定されている場合のみ Claude API が動作する。
+Webリサーチ（RSS収集）は APIキー不要で動作する。
 """
 
 import os
+import urllib.request
+import urllib.parse
+import xml.etree.ElementTree as ET
+from datetime import datetime
 
 try:
     import anthropic as _anthropic
     AI_AVAILABLE = bool(os.environ.get("ANTHROPIC_API_KEY"))
 except ImportError:
     AI_AVAILABLE = False
+
+def _gnews_url(query: str) -> str:
+    """Google News RSS URLを生成（日本語クエリを安全にエンコード）"""
+    q = urllib.parse.quote(query)
+    return f"https://news.google.com/rss/search?q={q}&hl=ja&gl=JP&ceid=JP%3Aja"
+
+
+# ノクト関連のRSSフィード（Google News）
+_RSS_FEED_QUERIES = {
+    "AI×副業":    "AI 副業 稼ぐ",
+    "X運用":      "X Twitter 運用 副業",
+    "note収益化": "note 収益化 副業",
+    "工場×副業":  "工場勤務 副業",
+    "0→1突破":    "副業 初心者 始め方",
+}
 
 # ノクトのシステムプロンプト
 _NOCT_SYSTEM = """
@@ -42,6 +62,68 @@ def _client():
     return _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
 
 
+# ─────────────────────────────────────────
+# Webリサーチ（APIキー不要）
+# ─────────────────────────────────────────
+def research_web(categories: list[str] | None = None, max_per_feed: int = 3) -> dict:
+    """
+    ハーマイオニー: Google NewsのRSSからノクト関連ニュースを自動収集する。
+    APIキー不要。標準ライブラリのみで動作。
+
+    Returns:
+        {カテゴリ名: [{"title": ..., "link": ..., "date": ...}, ...]}
+    """
+    feed_queries = {k: v for k, v in _RSS_FEED_QUERIES.items()
+                    if categories is None or k in categories}
+    results = {}
+
+    for cat, query in feed_queries.items():
+        url = _gnews_url(query)
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Mozilla/5.0 (X PDCA Tool for @noct_zero)"},
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                raw = resp.read()
+
+            root = ET.fromstring(raw)
+            ns   = {"media": "http://search.yahoo.com/mrss/"}
+            items = root.findall(".//item")[:max_per_feed]
+
+            articles = []
+            for item in items:
+                title = item.findtext("title", "").strip()
+                link  = item.findtext("link", "").strip()
+                pub   = item.findtext("pubDate", "").strip()
+
+                # 日付を整形
+                try:
+                    dt = datetime.strptime(pub[:25], "%a, %d %b %Y %H:%M:%S")
+                    date_str = dt.strftime("%m/%d %H:%M")
+                except Exception:
+                    date_str = pub[:10] if pub else ""
+
+                # Google Newsのリダイレクトリンクをそのまま使う
+                articles.append({"title": title, "link": link, "date": date_str})
+
+            results[cat] = articles
+        except Exception as e:
+            results[cat] = [{"title": f"取得失敗: {e}", "link": "", "date": ""}]
+
+    return results
+
+
+def format_research(research: dict) -> str:
+    """リサーチ結果を表示用テキストに整形する"""
+    lines = []
+    for cat, articles in research.items():
+        lines.append(f"\n【{cat}】")
+        for a in articles:
+            lines.append(f"  ・{a['title'][:60]}  ({a['date']})")
+    return "\n".join(lines)
+
+
 def _call(prompt: str, max_tokens: int = 1024) -> str:
     """Claude APIを呼び出してテキストを返す"""
     resp = _client().messages.create(
@@ -53,8 +135,17 @@ def _call(prompt: str, max_tokens: int = 1024) -> str:
     return resp.content[0].text.strip()
 
 
-def generate_briefing(theme: str, experience: str, numbers: str, emotion: str, news: str) -> str:
-    """ハーマイオニー: テーマ・体験からブリーフィングを生成"""
+def generate_briefing(
+    theme: str,
+    experience: str,
+    numbers: str,
+    emotion: str,
+    news: str,
+    research_data: dict | None = None,
+) -> str:
+    """ハーマイオニー: テーマ・体験・Webリサーチ結果からブリーフィングを生成"""
+    research_text = format_research(research_data) if research_data else (news or "なし")
+
     prompt = f"""
 以下の情報をもとに、今日のX投稿用ブリーフィングを作成してください。
 
@@ -62,16 +153,18 @@ def generate_briefing(theme: str, experience: str, numbers: str, emotion: str, n
 今日の体験・出来事: {experience or 'なし'}
 使える数字: {numbers or 'なし'}
 今の気持ち: {emotion or 'なし'}
-関連ニュース: {news or 'なし'}
+今日のトレンド・ニュース:
+{research_text}
 
 出力形式:
 【今日のブリーフィング】
 - 核心メッセージ（1行）
 - 使うべき具体的な数字や事実
 - 読者への価値提供
+- 今日のトレンドで使えるネタ（あれば）
 - おすすめ投稿パターン（3つ）
 """
-    return _call(prompt, 600)
+    return _call(prompt, 700)
 
 
 def generate_drafts(theme: str, briefing: str, category: str, hook_type: str) -> list[str]:
