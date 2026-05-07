@@ -1,0 +1,416 @@
+{
+  "character": {
+    "name": "凪 (Nagi)",
+    "age": "23",
+    "concept": "静かな夜に溶け込む、少し謎めいた都会の女性",
+    "tagline": "「ちゃんとしてるふりが、もう疲れた」",
+    "positioning": {
+      "axis_x": "エロ ←────── 情緒",
+      "axis_y": "キャラ薄 ────── 世界観濃",
+      "position": "右上：情緒×世界観濃 ← 最も空白なゾーン",
+      "unlike": [
+        "露出で勝負する自撮り垢（レッドオーシャン）",
+        "性癖ツイートだけの文章垢（飽和）",
+        "業者感のある出会い垢（信頼ゼロ）"
+      ]
+    },
+    "personality": {
+      "表の顔": "周りには「しっかりしてる」と思われている",
+      "裏の顔": "深夜だけ本音を吐き出す",
+      "口癖": [
+        "「なんか、疲れた」",
+        "「夜中だけ正直になれる」",
+        "「見てる？」"
+      ],
+      "好きなもの": [
+        "深夜の散歩",
+        "古い喫茶店",
+        "雨の音",
+        "桜が散る瞬間",
+        "ひとり酒"
+      ],
+      "嫌いなもの": [
+        "SNSの演じた幸せ投稿",
+        "朝",
+        "空元気"
+      ]
+    },
+    "visual_identity": {
+      "hair": "ミディアムブラウン or ブラック、少しくせ毛",
+      "eyes": "一重または奥二重、憂いのある目元",
+      "skin": "透明感のある白い肌、すっぴん風メイク",
+      "style": "シンプルな白T・ワンピース・オーバーサイズニット",
+      "atmosphere": "フィルムカメラ風、粒子感、淡い光",
+      "color_tone": "ピンク・クリーム・グレー、彩度低め"
+    },
+    "unique_angles": [
+      "AIであることを隠さない（むしろ『私はAIかもしれない』が世界観）",
+      "詩的で短い一言キャプション（俳句的）",
+      "桜・夜・雨・喫茶店など日本の情緒テーマで統一",
+      "フォロワーへの返信が詩的で不思議",
+      "定期的に『消えるかもしれない』と言って消えない（謎演出）"
+    ]
+  },
+  "prompts": {
+    "桜": {
+      "scene": "桜",
+      "positive": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nsitting under cherry blossom tree, petals falling, spring park,\nfilm grain, soft bokeh, cinematic lighting, golden hour soft sunlight through blossoms,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nwearing white blouse, cream wide pants",
+      "negative": "nsfw, nude, explicit, cartoon, anime, illustration, painting,\ndeformed, ugly, blurry, overexposed, bad anatomy,\nmultiple people, text, watermark, logo",
+      "midjourney": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nsitting under cherry blossom tree, petals falling, spring park,\nfilm grain, soft bokeh, cinematic lighting, golden hour soft sunlight through blossoms,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nwearing white blouse, cream wide pants --ar 9:16 --v 7 --style raw --q 2"
+    },
+    "深夜カフェ": {
+      "scene": "深夜カフェ",
+      "positive": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nalone in dimly lit retro cafe, late night, window seat, rain outside,\nfilm grain, soft bokeh, cinematic lighting, warm tungsten lamp, moody interior lighting,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nwearing oversized knit sweater, holding coffee cup",
+      "negative": "nsfw, nude, explicit, cartoon, anime, illustration, painting,\ndeformed, ugly, blurry, overexposed, bad anatomy,\nmultiple people, text, watermark, logo",
+      "midjourney": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nalone in dimly lit retro cafe, late night, window seat, rain outside,\nfilm grain, soft bokeh, cinematic lighting, warm tungsten lamp, moody interior lighting,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nwearing oversized knit sweater, holding coffee cup --ar 9:16 --v 7 --style raw --q 2"
+    },
+    "夜の窓辺": {
+      "scene": "夜の窓辺",
+      "positive": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nstanding by apartment window at night, city lights below, rain on glass,\nfilm grain, soft bokeh, cinematic lighting, moonlight and city lights, dramatic shadows,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\noversized t-shirt, casual, hair slightly messy",
+      "negative": "nsfw, nude, explicit, cartoon, anime, illustration, painting,\ndeformed, ugly, blurry, overexposed, bad anatomy,\nmultiple people, text, watermark, logo",
+      "midjourney": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nstanding by apartment window at night, city lights below, rain on glass,\nfilm grain, soft bokeh, cinematic lighting, moonlight and city lights, dramatic shadows,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\noversized t-shirt, casual, hair slightly messy --ar 9:16 --v 7 --style raw --q 2"
+    },
+    "朝の光": {
+      "scene": "朝の光",
+      "positive": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nmorning, soft sunlight through curtains, lying in bed,\nfilm grain, soft bokeh, cinematic lighting, golden morning light, lens flare,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nwhite pajamas, hair disheveled, sleepy expression",
+      "negative": "nsfw, nude, explicit, cartoon, anime, illustration, painting,\ndeformed, ugly, blurry, overexposed, bad anatomy,\nmultiple people, text, watermark, logo",
+      "midjourney": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nmorning, soft sunlight through curtains, lying in bed,\nfilm grain, soft bokeh, cinematic lighting, golden morning light, lens flare,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nwhite pajamas, hair disheveled, sleepy expression --ar 9:16 --v 7 --style raw --q 2"
+    },
+    "夏の夜": {
+      "scene": "夏の夜",
+      "positive": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nsummer night festival, yukata, lantern lights, crowd blurred in background,\nfilm grain, soft bokeh, cinematic lighting, warm festival lantern glow, night sky,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nlight pink yukata, hair up with kanzashi",
+      "negative": "nsfw, nude, explicit, cartoon, anime, illustration, painting,\ndeformed, ugly, blurry, overexposed, bad anatomy,\nmultiple people, text, watermark, logo",
+      "midjourney": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slight wave, single eyelid or hooded eyes, melancholic expression,\nporcelain skin, minimal makeup, natural beauty,\nsummer night festival, yukata, lantern lights, crowd blurred in background,\nfilm grain, soft bokeh, cinematic lighting, warm festival lantern glow, night sky,\nmuted pastel tones, pink and cream color palette,\nhigh quality, 8k, detailed skin texture,\nlight pink yukata, hair up with kanzashi --ar 9:16 --v 7 --style raw --q 2"
+    }
+  },
+  "sample_posts": [
+    {
+      "platform": "X",
+      "scene": "桜",
+      "caption": "桜の下で、また一人\nそれでも、悪くない夜",
+      "full_text": "桜の下で、また一人\nそれでも、悪くない夜\n\n#凪 #裏垢 #深夜垢 #日本 #情緒 #桜 #夜 #孤独 #本音 #フォトジェニック",
+      "char_count": 65
+    },
+    {
+      "platform": "TikTok",
+      "scene": "桜",
+      "caption": "散るから、綺麗なんだって\n最近やっと分かった気がする",
+      "full_text": "散るから、綺麗なんだって\n最近やっと分かった気がする\n\n#fyp #viral #japaneseaesthetic #lofi #nightwalk #japangirl #nightvibes #aesthetic #alone #sakura",
+      "char_count": 124
+    },
+    {
+      "platform": "X",
+      "scene": "深夜カフェ",
+      "caption": "雨の音が好き\n全部かき消してくれるから",
+      "full_text": "雨の音が好き\n全部かき消してくれるから\n\n#凪 #裏垢 #深夜垢 #日本 #情緒 #桜 #夜 #孤独 #本音 #フォトジェニック",
+      "char_count": 64
+    },
+    {
+      "platform": "TikTok",
+      "scene": "深夜カフェ",
+      "caption": "深夜の喫茶店って\n本音しかない場所だと思う",
+      "full_text": "深夜の喫茶店って\n本音しかない場所だと思う\n\n#fyp #viral #japaneseaesthetic #lofi #nightwalk #japangirl #nightvibes #aesthetic #alone #sakura",
+      "char_count": 119
+    },
+    {
+      "platform": "X",
+      "scene": "夜の窓辺",
+      "caption": "ちゃんとしてるふりが\nもう疲れた",
+      "full_text": "ちゃんとしてるふりが\nもう疲れた\n\n#凪 #裏垢 #深夜垢 #日本 #情緒 #桜 #夜 #孤独 #本音 #フォトジェニック",
+      "char_count": 61
+    },
+    {
+      "platform": "TikTok",
+      "scene": "夜の窓辺",
+      "caption": "この街のどこかに\n同じ窓から見てる人がいる気がして",
+      "full_text": "この街のどこかに\n同じ窓から見てる人がいる気がして\n\n#fyp #viral #japaneseaesthetic #lofi #nightwalk #japangirl #nightvibes #aesthetic #alone #sakura",
+      "char_count": 123
+    },
+    {
+      "platform": "X",
+      "scene": "朝の光",
+      "caption": "おはよう\nって言える人がいない朝",
+      "full_text": "おはよう\nって言える人がいない朝\n\n#凪 #裏垢 #深夜垢 #日本 #情緒 #桜 #夜 #孤独 #本音 #フォトジェニック",
+      "char_count": 61
+    },
+    {
+      "platform": "TikTok",
+      "scene": "朝の光",
+      "caption": "おはよう\nって言える人がいない朝",
+      "full_text": "おはよう\nって言える人がいない朝\n\n#fyp #viral #japaneseaesthetic #lofi #nightwalk #japangirl #nightvibes #aesthetic #alone #sakura",
+      "char_count": 114
+    },
+    {
+      "platform": "X",
+      "scene": "夏の夜",
+      "caption": "夏の終わりが\n一番好き",
+      "full_text": "夏の終わりが\n一番好き\n\n#凪 #裏垢 #深夜垢 #日本 #情緒 #桜 #夜 #孤独 #本音 #フォトジェニック",
+      "char_count": 56
+    },
+    {
+      "platform": "TikTok",
+      "scene": "夏の夜",
+      "caption": "お祭りって孤独だよね\n人がいるほど",
+      "full_text": "お祭りって孤独だよね\n人がいるほど\n\n#fyp #viral #japaneseaesthetic #lofi #nightwalk #japangirl #nightvibes #aesthetic #alone #sakura",
+      "char_count": 115
+    }
+  ],
+  "calendar_4w": [
+    {
+      "date": "2026-05-07",
+      "time": "22:00",
+      "platform": "X",
+      "scene": "桜",
+      "caption": "見てる？\nもうすぐ消えちゃうかも",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-08",
+      "time": "00:30",
+      "platform": "X",
+      "scene": "深夜カフェ",
+      "caption": "誰かに見てもらいたくて\nここにいる",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-08",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "桜",
+      "caption": "散るから、綺麗なんだって\n最近やっと分かった気がする",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-09",
+      "time": "22:00",
+      "platform": "X",
+      "scene": "夜の窓辺",
+      "caption": "夜中だけ、正直になれる",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-10",
+      "time": "22:00",
+      "platform": "X",
+      "scene": "朝の光",
+      "caption": "また夜になったら\nここに来るね",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-10",
+      "time": "22:30",
+      "platform": "TikTok",
+      "scene": "夏の夜",
+      "caption": "浴衣を見てくれる人\nいなくていい\nここに来たから",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-11",
+      "time": "22:00",
+      "platform": "X",
+      "scene": "夏の夜",
+      "caption": "夏の終わりが\n一番好き",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-12",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "深夜カフェ",
+      "caption": "深夜の喫茶店って\n本音しかない場所だと思う",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-14",
+      "time": "00:30",
+      "platform": "X",
+      "scene": "桜",
+      "caption": "桜の下で、また一人\nそれでも、悪くない夜",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-15",
+      "time": "00:30",
+      "platform": "X",
+      "scene": "深夜カフェ",
+      "caption": "深夜の喫茶店って\n本音しかない場所だと思う",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-15",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "桜",
+      "caption": "桜の下で、また一人\nそれでも、悪くない夜",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-16",
+      "time": "00:30",
+      "platform": "X",
+      "scene": "夜の窓辺",
+      "caption": "夜中だけ、正直になれる",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-17",
+      "time": "00:30",
+      "platform": "X",
+      "scene": "朝の光",
+      "caption": "朝が苦手\n夜の自分の方が好きだから",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-17",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "桜",
+      "caption": "見てる？\nもうすぐ消えちゃうかも",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-18",
+      "time": "00:30",
+      "platform": "X",
+      "scene": "夏の夜",
+      "caption": "お祭りって孤独だよね\n人がいるほど",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-19",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "夜の窓辺",
+      "caption": "夜中だけ、正直になれる",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-21",
+      "time": "22:00",
+      "platform": "X",
+      "scene": "桜",
+      "caption": "見てる？\nもうすぐ消えちゃうかも",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-22",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "朝の光",
+      "caption": "朝が苦手\n夜の自分の方が好きだから",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-22",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "深夜カフェ",
+      "caption": "深夜の喫茶店って\n本音しかない場所だと思う",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-23",
+      "time": "22:00",
+      "platform": "X",
+      "scene": "夜の窓辺",
+      "caption": "夜中だけ、正直になれる",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-24",
+      "time": "19:00",
+      "platform": "TikTok",
+      "scene": "深夜カフェ",
+      "caption": "誰かに見てもらいたくて\nここにいる",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-24",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "朝の光",
+      "caption": "朝が苦手\n夜の自分の方が好きだから",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-25",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "夏の夜",
+      "caption": "夏の終わりが\n一番好き",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-26",
+      "time": "22:30",
+      "platform": "TikTok",
+      "scene": "夜の窓辺",
+      "caption": "この街のどこかに\n同じ窓から見てる人がいる気がして",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-28",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "桜",
+      "caption": "桜の下で、また一人\nそれでも、悪くない夜",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-29",
+      "time": "22:30",
+      "platform": "TikTok",
+      "scene": "朝の光",
+      "caption": "朝が苦手\n夜の自分の方が好きだから",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-29",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "深夜カフェ",
+      "caption": "深夜の喫茶店って\n本音しかない場所だと思う",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-30",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "夜の窓辺",
+      "caption": "この街のどこかに\n同じ窓から見てる人がいる気がして",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-05-31",
+      "time": "19:00",
+      "platform": "TikTok",
+      "scene": "夏の夜",
+      "caption": "お祭りって孤独だよね\n人がいるほど",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    },
+    {
+      "date": "2026-05-31",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "朝の光",
+      "caption": "おはよう\nって言える人がいない朝",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-06-01",
+      "time": "23:30",
+      "platform": "X",
+      "scene": "夏の夜",
+      "caption": "浴衣を見てくれる人\nいなくていい\nここに来たから",
+      "sd_prompt_preview": "photorealistic, 1girl, Japanese woman, 23 years old,\nmedium brown hair with slig..."
+    },
+    {
+      "date": "2026-06-02",
+      "time": "21:00",
+      "platform": "TikTok",
+      "scene": "夜の窓辺",
+      "caption": "この街のどこかに\n同じ窓から見てる人がいる気がして",
+      "sd_prompt_preview": "→ dance_video_editor.py で動画生成"
+    }
+  ]
+}
