@@ -104,6 +104,24 @@ BUZZ_PRESETS = [
         ),
     },
     {
+        "id": "B04b",
+        "name": "【ビーチ×清楚】ナチュラル白ビキニ",
+        "tags": ["ビーチ", "清楚", "白ビキニ", "ナチュラル"],
+        "buzz_point": "B04の清楚ナチュラル調整版。メイク薄め×白ビキニ×半身で品よく仕上げる",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, "
+            "natural minimal makeup, soft lip color, clear glowing skin, innocent expression, "
+            "long wavy light brown hair, "
+            "modest white bikini at the beach, "
+            "tropical beach, blue ocean background, soft white sand, "
+            "natural daylight, gentle shadows, light breeze, "
+            "half-body shot, waist up, "
+            "gentle smile, warm and approachable vibe, "
+            "photorealistic, 8K resolution, ultra-detailed, sharp focus, "
+            "pure and fresh aesthetic"
+        ),
+    },
+    {
         "id": "B08",
         "name": "【メイド×アニメ風】萌え×アート",
         "tags": ["メイド", "アニメ風", "ツインテール", "萌え"],
