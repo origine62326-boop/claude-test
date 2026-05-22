@@ -9,7 +9,7 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-from . import storage, ui
+from . import storage, ui, prompt_builder
 
 HISTORY_FILE = "grok_beauty_history.json"
 IMAGES_DIR   = Path(__file__).parent.parent / "demo_photos" / "grok_generated"
@@ -99,20 +99,34 @@ def run():
 
     while True:
         choice = ui.menu("美女生成メニュー", [
-            ("1", "プリセットから生成"),
-            ("2", "フリープロンプトで生成"),
-            ("3", "生成履歴を表示"),
+            ("1", "プロンプトビルダーで生成 (推奨)"),
+            ("2", "プリセットから生成"),
+            ("3", "フリープロンプトで生成"),
+            ("4", "生成履歴を表示"),
             ("0", "戻る"),
         ])
 
         if choice == "1":
-            _generate_with_preset()
+            _generate_with_builder()
         elif choice == "2":
-            _generate_custom()
+            _generate_with_preset()
         elif choice == "3":
+            _generate_custom()
+        elif choice == "4":
             _show_history()
         elif choice == "0":
             break
+
+
+def _generate_with_builder():
+    prompt = prompt_builder.run()
+    if prompt:
+        n_raw = ui.prompt("生成枚数 (1-4)", "1")
+        try:
+            n = max(1, min(4, int(n_raw)))
+        except ValueError:
+            n = 1
+        _run_generation(prompt=prompt, style="ビルダー", n=n)
 
 
 def _generate_with_preset():
