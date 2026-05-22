@@ -8,6 +8,117 @@ from . import storage, ui
 SAVED_PROMPTS_FILE = "saved_prompts.json"
 
 # ─────────────────────────────────────────────
+# Xバズ狙いプリセットプロンプト
+# ─────────────────────────────────────────────
+BUZZ_PRESETS = [
+    {
+        "id": "B01",
+        "name": "【桜×清楚】春の透明感ガール",
+        "tags": ["桜", "清楚", "春", "透明感"],
+        "buzz_point": "桜×逆光×清楚の最強トリオ。春季は特に拡散されやすい",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, innocent expression, rosy cheeks, soft features, "
+            "long straight black hair, elegant floral dress, "
+            "under cherry blossom trees, petals falling, "
+            "backlit, sun halo, silhouette glow, "
+            "portrait shot, face and upper body, dreamy expression, slightly unfocused gaze, "
+            "photorealistic, 8K resolution, ultra-detailed, sharp focus"
+        ),
+    },
+    {
+        "id": "B02",
+        "name": "【浴衣×夏祭り】縁日の彼女感",
+        "tags": ["浴衣", "夏祭り", "彼女感", "夜"],
+        "buzz_point": "浴衣×夜縁日×はにかみ笑顔。夏に最高拡散。「好きになるやつ」コメントを誘発",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, natural face, minimal makeup, clear skin, "
+            "high ponytail hairstyle, colorful summer yukata, "
+            "nighttime city street, neon lights background, warm candlelight, intimate atmosphere, "
+            "half-body shot, waist up, shy smile, blushing cheeks, "
+            "photorealistic, 8K resolution, ultra-detailed, sharp focus"
+        ),
+    },
+    {
+        "id": "B03",
+        "name": "【ネオン×クール】深夜の渋谷系",
+        "tags": ["ネオン", "クール", "夜", "都市"],
+        "buzz_point": "映画のワンシーン風。「ドラマの主人公感」でRTを稼ぐ",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, sharp facial features, strong brows, cool expression, "
+            "long wavy brown hair, smart casual office attire, blazer, "
+            "nighttime city street, neon lights background, colorful neon lighting, dramatic shadows, "
+            "full body shot, head to toe, confident posture, direct gaze, "
+            "cinematic photography, film grain, bokeh background"
+        ),
+    },
+    {
+        "id": "B04",
+        "name": "【ビーチ×夏】青春の眩しさ",
+        "tags": ["ビーチ", "夏", "水着", "健康的"],
+        "buzz_point": "夏の健康美×明るい笑顔。保存数が特に伸びる構成",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, Korean-style makeup, gradient lips, dewy skin, "
+            "long wavy brown hair, stylish bikini at the beach, "
+            "tropical beach, blue ocean background, natural daylight, soft shadows, "
+            "full body shot, head to toe, bright cheerful smile, energetic vibe, "
+            "photorealistic, 8K resolution, ultra-detailed, sharp focus"
+        ),
+    },
+    {
+        "id": "B05",
+        "name": "【着物×幻想】和の美人図",
+        "tags": ["着物", "和風", "幻想的", "雑誌風"],
+        "buzz_point": "伝統美×幻想光で「芸術作品」として保存される。海外勢への訴求も高い",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, glamorous makeup, defined eyes, glossy lips, "
+            "long straight black hair, traditional Japanese kimono, "
+            "fantasy flower field, magical soft light, blue hour dusk lighting, cool tones, "
+            "full body shot, head to toe, dreamy expression, slightly unfocused gaze, "
+            "professional magazine photography, editorial style"
+        ),
+    },
+    {
+        "id": "B06",
+        "name": "【カフェ×ナチュラル】日常のかわいさ",
+        "tags": ["カフェ", "ナチュラル", "日常", "親近感"],
+        "buzz_point": "「隣にいそうな可愛い子」感。親近感が高くコメントを誘発しやすい",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, natural face, minimal makeup, clear skin, "
+            "short black bob haircut, casual outfit, jeans and white t-shirt, "
+            "outdoor café terrace, warm afternoon light, soft studio lighting, even illumination, "
+            "portrait shot, face and upper body, bright cheerful smile, energetic vibe, "
+            "photorealistic, high quality"
+        ),
+    },
+    {
+        "id": "B07",
+        "name": "【逆光×花畑×後ろ姿】エモ最強構図",
+        "tags": ["逆光", "後ろ姿", "エモ", "花畑"],
+        "buzz_point": "「顔が見たい」コメントでエンゲージが爆増する想像力を掻き立てる最強構図",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, innocent expression, rosy cheeks, soft features, "
+            "long straight black hair, elegant floral dress, "
+            "fantasy flower field, magical soft light, backlit, sun halo, silhouette glow, "
+            "shot from behind, looking back over shoulder, dreamy expression, slightly unfocused gaze, "
+            "photorealistic, 8K resolution, ultra-detailed, sharp focus"
+        ),
+    },
+    {
+        "id": "B08",
+        "name": "【メイド×アニメ風】萌え×アート",
+        "tags": ["メイド", "アニメ風", "ツインテール", "萌え"],
+        "buzz_point": "イラスト風×メイド×ツインテールはオタク層への訴求力が圧倒的",
+        "prompt": (
+            "a beautiful 20-year-old Japanese woman, Korean-style makeup, gradient lips, dewy skin, "
+            "twin tails hairstyle, classic maid outfit, "
+            "minimalist white room, clean background, soft studio lighting, even illumination, "
+            "portrait shot, face and upper body, seductive expression, slightly open mouth, "
+            "detailed digital illustration, anime art style"
+        ),
+    },
+]
+
+# ─────────────────────────────────────────────
 # プロンプト要素ライブラリ
 # ─────────────────────────────────────────────
 
@@ -248,8 +359,8 @@ def select_saved() -> str | None:
         return None
 
     ui.section(f"保存済みプロンプト ({len(saved)} 件)")
-    rows = [[s["id"], s["name"], s["created_at"][:16], s["prompt"][:30]] for s in saved]
-    ui.table(["ID", "名前", "作成日時", "プロンプト"], rows, [5, 16, 17, 32])
+    rows = [[s["id"], s["name"][:20], s["created_at"][:10], s.get("buzz_point", s["prompt"])[:28]] for s in saved]
+    ui.table(["ID", "名前", "日付", "バズ狙い/プロンプト"], rows, [5, 22, 12, 30])
 
     sid = ui.prompt("\n使用するID (Enterでキャンセル)", "")
     if not sid:
@@ -260,7 +371,11 @@ def select_saved() -> str | None:
         return None
 
     ui.info(f"選択: {entry['name']}")
-    print(f"  {ui.Color.GREEN}{entry['prompt']}{ui.Color.RESET}")
+    if entry.get("tags"):
+        print(f"  タグ  : {' '.join('#'+t for t in entry['tags'])}")
+    if entry.get("buzz_point"):
+        print(f"  狙い  : {entry['buzz_point']}")
+    print(f"  Prompt: {ui.Color.GREEN}{entry['prompt']}{ui.Color.RESET}")
     return entry["prompt"]
 
 
@@ -286,6 +401,30 @@ def delete_saved():
         ui.success("削除しました")
 
 
+def select_buzz_preset() -> str | None:
+    """Xバズプリセット一覧から選択してプロンプトを返す"""
+    ui.section(f"Xバズプリセット ({len(BUZZ_PRESETS)} 件)")
+    rows = [
+        [p["id"], p["name"][:22], " ".join("#"+t for t in p["tags"][:3])]
+        for p in BUZZ_PRESETS
+    ]
+    ui.table(["ID", "名前", "タグ"], rows, [5, 24, 24])
+
+    bid = ui.prompt("\n使用するID (例: B01)", "")
+    if not bid:
+        return None
+    entry = next((p for p in BUZZ_PRESETS if p["id"] == bid.upper()), None)
+    if not entry:
+        ui.error("IDが見つかりません")
+        return None
+
+    ui.section(f"{entry['name']}")
+    print(f"  タグ  : {' '.join('#'+t for t in entry['tags'])}")
+    print(f"  狙い  : {ui.Color.YELLOW}{entry['buzz_point']}{ui.Color.RESET}")
+    print(f"  Prompt: {ui.Color.GREEN}{entry['prompt']}{ui.Color.RESET}\n")
+    return entry["prompt"]
+
+
 def run() -> str | None:
     """
     プロンプトビルダーのメインエントリーポイント。
@@ -293,21 +432,26 @@ def run() -> str | None:
     """
     while True:
         choice = ui.menu("プロンプトメニュー", [
-            ("1", "新規作成 (ビルダー)"),
-            ("2", "保存済みから選択"),
-            ("3", "保存済みを削除"),
+            ("1", "Xバズプリセット (おすすめ)"),
+            ("2", "新規作成 (ビルダー)"),
+            ("3", "保存済みから選択"),
+            ("4", "保存済みを削除"),
             ("0", "戻る"),
         ])
 
         if choice == "1":
-            result = build_interactive()
+            result = select_buzz_preset()
             if result:
                 return result
         elif choice == "2":
-            result = select_saved()
+            result = build_interactive()
             if result:
                 return result
         elif choice == "3":
+            result = select_saved()
+            if result:
+                return result
+        elif choice == "4":
             delete_saved()
         elif choice == "0":
             return None
