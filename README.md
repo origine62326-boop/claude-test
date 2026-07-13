@@ -68,3 +68,30 @@ data/              # 運用データ (JSONファイル, gitignore対象)
 - フォロワー推移のテキストグラフ
 - 全サイクル横断比較
 - Markdownファイルへのエクスポート
+
+## FX予測ツール (fx_predict.py)
+
+USD/JPY の為替レート変動をLSTM（時系列機械学習モデル）で予測するCLIツールです。
+Yahoo Financeから直近の日次終値を取得し、モデルを学習・保存した上で数営業日先のレートを予測します。
+
+### 起動方法
+
+```bash
+pip install -r requirements.txt
+python fx_predict.py
+```
+
+### 主なオプション
+
+```
+--forecast-days N   予測する営業日数 (default: 5)
+--history-range R   取得する履歴範囲。1y/2y/5y など (default: 2y)
+--window N          予測に使う直近日数の窓幅 (default: 20)
+--epochs N          学習エポック数 (default: 40)
+--retrain           保存済みモデルを使わず再学習する
+--no-cache          レート履歴のキャッシュ(6時間)を使わず再取得する
+```
+
+学習済みモデルは `data/usdjpy_lstm.keras` に保存され、次回実行時は再学習せずに再利用されます（`--retrain` で強制再学習）。
+
+> ⚠️ 本ツールの予測は過去データに基づく統計的推定であり、投資判断の根拠として利用しないでください。

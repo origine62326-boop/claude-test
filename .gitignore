@@ -3,5 +3,6 @@ __pycache__/
 *.pyo
 .DS_Store
 data/*.json
+data/*.keras
 !data/.gitkeep
 pdca_report_*.md
