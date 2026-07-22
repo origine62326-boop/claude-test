@@ -1,0 +1,18 @@
+# USDJPY_LowRisk_Trend_EA.mq4 の入力パラメータのうち、リスクに関わる値をミラーしたもの。
+# 分析側(trade_anomaly_check.py等)がEAの安全設計を前提としたチェックを行う際の参照値。
+#
+# 重要: ここは「EA側の実際の入力値」を人間が転記するものであり、自動同期はしていない。
+# EA側のパラメータ(mt4/USDJPY_LowRisk_Trend_EA.mq4)を変更した場合は、必ずこちらも
+# 手動で更新すること。ズレたままだと異常検知が誤判定する。
+
+magic_number: 20260714
+risk_percent: 0.5                # 1トレードの許容損失(口座残高に対する%)
+max_daily_loss_percent: 2.0      # Phase6で実装予定(v0.1では未使用)
+max_consecutive_losses: 3        # Phase6で実装予定(v0.1では未使用)
+maximum_lot: 1.0                 # trade_anomaly_check.py の --max-lot にそのまま渡せる
+max_spread_pips: 3.0
+atr_stop_multiplier: 1.5
+reward_risk_ratio: 2.0
+min_stop_loss_pips: 5.0
+max_stop_loss_pips: 100.0
+allow_live_trading: false        # 必ずfalseであることを人間が確認すること

@@ -1,0 +1,14 @@
+# 次バージョンを「承認(人間の確認へ回す)」候補とするための機械的な合格基準。
+# validate_release.py がこの基準に基づいてPASS/FAILを判定する。
+#
+# 重要: これはあくまで「明らかにダメなものを機械的に弾く」ためのフィルタであり、
+# PASSしたからといって実口座投入を推奨するものではない。最終判断は必ず人間が行う。
+# このファイルを緩める場合は、その理由をCHANGELOG.mdに記録すること。
+
+min_trades: 200                        # 統計的信頼性の最低ライン(README_JP.md参照)
+min_profit_factor: 1.2                 # 1.0(損益分岐)より十分な余裕を求める
+max_drawdown_pct: 15.0                 # 最大ドローダウン率の上限
+min_expected_payoff: 0.0               # 期待値がマイナスは不合格
+max_consecutive_losses_hard_limit: 15  # これを超える連敗は設計上の異常の疑いとみなす
+require_anomaly_free: true             # trade_anomaly_check.py の結果がクリーンであること
+min_risk_reward_ratio: 1.5             # 平均勝ち / |平均負け|

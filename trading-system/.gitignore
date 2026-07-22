@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+
+reports/raw/*
+!reports/raw/.gitkeep
+reports/normalized/*
+!reports/normalized/.gitkeep
+reports/analyzed/*
+!reports/analyzed/.gitkeep
+
+outputs/summaries/*
+!outputs/summaries/.gitkeep
+outputs/comparisons/*
+!outputs/comparisons/.gitkeep
+outputs/charts/*
+!outputs/charts/.gitkeep
