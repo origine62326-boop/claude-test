@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.1.1 (コンパイル警告修正)
+
+- ユーザー環境のMetaEditorでのコンパイル結果: `0 errors, 1 warnings`
+- 警告「version is incompatible with MQL5 Market, must be xxx.yyy」を解消するため、
+  `#property version` を `"0.10"` → `"1.00"` に変更（MQL5 Marketの書式規約対応。
+  開発進捗上のバージョンは引き続きこのCHANGELOGでv0.1系として管理する）
+- 修正後の再コンパイルはユーザー環境での確認待ち
+
 ## v0.1.0 (Phase 1〜4 実装)
 
 ### 実装済み

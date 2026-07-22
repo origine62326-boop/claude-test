@@ -11,7 +11,9 @@
 //|  - 未確定足（shift=0）は判定に一切使用しない                       |
 //+------------------------------------------------------------------+
 #property copyright "USDJPY_LowRisk_Trend_EA"
-#property version   "0.10"
+// #property version はMQL5 Marketの書式規約(xxx.yyy形式、メジャー1以上)に合わせた表記。
+// 開発進捗としてのバージョン(Phase1-4=v0.1.0)はCHANGELOG.mdで管理する。
+#property version   "1.00"
 #property strict
 #property description "USD/JPY H1 押し目買い・戻り売り 低リスク順張りEA (v0.1: Phase1-4)"
 
