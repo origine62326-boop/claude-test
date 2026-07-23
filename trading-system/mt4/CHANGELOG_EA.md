@@ -1,4 +1,9 @@
-# CHANGELOG
+# CHANGELOG (このファイルは履歴として保持。今後のバージョン管理は trading-system/CHANGELOG.md へ統合)
+
+> **注意**: v0.1.0以降、EA単体ではなく `mt4/` + `analysis/`〜`scripts/` を
+> セットにした1つのバージョン番号で管理する方針に変更した。以降の変更履歴は
+> `trading-system/CHANGELOG.md` に記録する。このファイルはv0.1.0確定までの
+> EA単体の履歴として残す。
 
 ## v0.1.1 (コンパイル警告修正)
 

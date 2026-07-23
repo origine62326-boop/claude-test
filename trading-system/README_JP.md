@@ -1,5 +1,7 @@
 # trading-system
 
+**現在のバージョン: v0.1.0**（詳細は `CHANGELOG.md`、正式記録は `releases/v0.1.0/`）
+
 `USDJPY_LowRisk_Trend_EA`（楽天MT4向け、USD/JPY H1専用の低リスク順張りEA）を、
 バックテスト→分析→改善提案→人間承認→次バージョン実装、というサイクルで
 安全に育てていくための検証パイプラインです。
@@ -94,6 +96,38 @@ pytest tests/ -v
 | `configs/` | 分析設定・合格基準・EAリスク値のミラー |
 | `outputs/` | 人間向けの成果物(サマリー・比較・チャート、gitignore対象) |
 | `scripts/` | 上記を組み合わせて実行するCLIエントリーポイント |
+| `releases/` | **バージョンごとの正式な記録**(NOTES.md・確定版サマリー・比較レポート。git管理対象) |
+
+## バージョン管理ルール
+
+`mt4/`(EA本体)と `analysis/`〜`scripts/`(分析パイプライン)をセットにして、
+以下のバージョン番号で管理します。
+
+| バージョン | 意味 |
+|---|---|
+| v0.1.0 | 初回EA |
+| v0.2.0 | 新機能追加 |
+| v0.2.1 | バグ修正 |
+| v0.3.0 | 売買ロジック改善 |
+| v1.0.0 | 十分なバックテスト・デモ運用を経て安定版と判断した時点 |
+
+**変更を行う際の手順**:
+
+1. 既存ファイルを上書きする前に、その時点の状態をGitでコミットしておく
+2. 変更を実施する
+3. 重要な変更であればバージョンを1つ進める（上表の基準に従う）
+4. `CHANGELOG.md` に変更内容を追記する
+5. この `README_JP.md` にも変更内容を追記する（該当セクションを更新）
+6. そのバージョンでバックテストを実行し、`scripts/run_analysis.py` の出力を
+   `releases/vX.Y.Z/` にコピーして記録する
+7. 前バージョンがあれば `scripts/compare_backtests.py` で比較レポートを作成し、
+   同様に `releases/vX.Y.Z/` へ記録する
+8. `git tag -a vX.Y.Z -m "..."` でタグを作成し、GitHubへpushする
+9. GitHub Releaseを作成する（現状Claude側にRelease作成用のツールがないため、
+   タグをpushした後、人間がGitHub上の「Draft a release」から作成する。
+   本文は `releases/vX.Y.Z/NOTES.md` の内容をベースにする）
+
+詳細な `releases/` の運用は `releases/README.md` を参照してください。
 
 ## 現在の既知の制約
 
