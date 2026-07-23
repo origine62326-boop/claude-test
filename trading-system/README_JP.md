@@ -1,6 +1,6 @@
 # trading-system
 
-**現在のバージョン: v0.1.0**（詳細は `CHANGELOG.md`、正式記録は `releases/v0.1.0/`）
+**現在のバージョン: v0.2.0**（詳細は `CHANGELOG.md`、正式記録は `releases/v0.2.0/`）
 
 `USDJPY_LowRisk_Trend_EA`（楽天MT4向け、USD/JPY H1専用の低リスク順張りEA）を、
 バックテスト→分析→改善提案→人間承認→次バージョン実装、というサイクルで
@@ -43,17 +43,30 @@ pip install -r requirements.txt
 
 ## 使い方
 
-### 1. バックテスト結果を1回分析する
+### 1. バックテスト結果を1回分析する（最小構成: レポートHTMLのみ）
+
+```bash
+python scripts/run_analysis.py reports/raw/report_v0.1_1y.htm
+```
+
+`--run-id` を省略した場合、ファイル名(拡張子抜き)がそのままrun-idになります。
+`outputs/summaries/report_v0.1_1y_summary.md` に、初心者向けの日本語サマリー
+（バックテスト条件・純利益・PF・最大DD・勝率・取引回数・最大連敗・モデリング品質・
+注意点・次に確認すべきこと）がまとまります。
+
+### 1b. 操作履歴HTMLも渡す（フル版: トレード明細まで分析）
 
 ```bash
 python scripts/run_analysis.py \
-  --report reports/raw/report_v0.1_1y.htm \
+  reports/raw/report_v0.1_1y.htm \
   --trades reports/raw/trades_v0.1_1y.htm \
   --run-id v0.1_1y \
   --max-lot 1.0
 ```
 
-`outputs/summaries/v0.1_1y_summary.md` に結果がまとまります。
+上記の最小構成の結果に加え、トレード明細からの指標再計算・安全設計違反の異常検知・
+年別/月別・買売別・時間帯別・レジーム近似分析も実行し、詳細版サマリー
+(`outputs/summaries/v0.1_1y_summary_full.md`)を生成します。
 
 ### 2. 2つの結果を比較する
 

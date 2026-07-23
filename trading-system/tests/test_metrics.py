@@ -4,8 +4,13 @@ parse_mt4_trades.py と performance_metrics.py のテスト。
 
 from conftest import FIXTURES_DIR
 
+from analysis.parse_mt4_report import parse_report_html
 from analysis.parse_mt4_trades import parse_trades_html
-from analysis.performance_metrics import compute_metrics_from_trades, cross_check_against_report
+from analysis.performance_metrics import (
+    compute_metrics_from_trades,
+    cross_check_against_report,
+    validate_report_data,
+)
 
 
 def test_parse_trades_pairs_open_and_close_rows():
@@ -91,3 +96,57 @@ def test_cross_check_detects_mismatch():
     mismatches = cross_check_against_report(computed, report_mismatched)
     assert len(mismatches) == 1
     assert mismatches[0]["field"] == "total_trades"
+
+
+# ==== validate_report_data のテスト ====
+
+def test_validate_report_data_clean_report_is_valid():
+    report = parse_report_html(FIXTURES_DIR / "sample_report.htm")
+    result = validate_report_data(report)
+    assert result["is_valid"] is True
+    assert result["errors"] == []
+    # 取引数192件・モデリング品質57.30%はどちらも目安未満のため、警告は出る想定
+    assert result["warning_count"] >= 1
+
+
+def test_validate_report_data_detects_missing_required_field():
+    report = parse_report_html(FIXTURES_DIR / "sample_report.htm")
+    report["profit_factor"] = None
+    result = validate_report_data(report)
+    assert result["is_valid"] is False
+    assert any(e["field"] == "profit_factor" for e in result["errors"])
+
+
+def test_validate_report_data_detects_out_of_range_values():
+    report = parse_report_html(FIXTURES_DIR / "sample_report.htm")
+    report["win_rate_pct"] = 150.0  # あり得ない値
+    result = validate_report_data(report)
+    assert result["is_valid"] is False
+    assert any(e["field"] == "win_rate_pct" for e in result["errors"])
+
+
+def test_validate_report_data_detects_inconsistent_net_profit():
+    report = parse_report_html(FIXTURES_DIR / "sample_report.htm")
+    report["net_profit"] = 999999.0  # gross_profit+gross_lossと矛盾させる
+    result = validate_report_data(report)
+    assert result["is_valid"] is False
+    assert any(e["field"] == "net_profit" for e in result["errors"])
+
+
+def test_validate_report_data_warns_on_low_trade_count_and_quality():
+    report = parse_report_html(FIXTURES_DIR / "sample_report.htm")
+    result = validate_report_data(report)
+    warning_fields = {w["field"] for w in result["warnings"]}
+    assert "total_trades" in warning_fields  # 192件 < 200件の目安
+    assert "modelling_quality_pct" in warning_fields  # 57.30% < 70%の目安
+
+
+def test_validate_report_data_no_warning_when_thresholds_met():
+    report = parse_report_html(FIXTURES_DIR / "sample_report.htm")
+    report["total_trades"] = 500
+    report["win_trades"] = 200
+    report["loss_trades"] = 300
+    report["modelling_quality_pct"] = 95.0
+    report["mismatched_chart_errors"] = 0
+    result = validate_report_data(report)
+    assert result["warnings"] == []
