@@ -1,0 +1,13 @@
+# analysis/ 配下の分析モジュールが使う設定値。
+# 現状は run_analysis.py 等のデフォルト引数を人間が読める形でここにも文書化している
+# (スクリプト側の --blocks / --window 引数のデフォルトと同期させること)。
+
+regime_analysis:
+  n_blocks: 4          # 時系列を何ブロックに分割するか
+  rolling_window: 30   # 移動勝率のウィンドウ幅(トレード数)
+
+performance_metrics:
+  min_trades_for_confidence: 200  # acceptance_criteria.yaml の min_trades と揃えること
+
+cross_check:
+  tolerance_pct: 1.0   # レポート値とトレード再計算値の許容乖離(%)
