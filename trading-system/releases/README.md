@@ -25,9 +25,10 @@ releases/vX.Y.Z/
 6. 前バージョンがあれば `scripts/compare_backtests.py` で比較レポートを作成し、
    同様にコピーして記録する
 7. `git tag vX.Y.Z` でタグを打ち、GitHubへプッシュする
-8. GitHub Releaseを作成する（現状Claude側に直接Release作成するツールがないため、
-   タグをプッシュした後、人間がGitHub上で「Draft a release」から作成する運用。
-   本文はこのバージョンの `NOTES.md` の内容をベースにする）
+8. GitHub Releaseは `.github/workflows/release.yml` により**自動作成される**。
+   `vX.Y.Z` 形式のタグpushをトリガーに、このバージョンの `NOTES.md` があれば
+   それをそのままRelease本文として使い、無ければGitHubの自動生成ノートを使う。
+   人間の手動操作は不要。
 
 ## 現状の制約
 
