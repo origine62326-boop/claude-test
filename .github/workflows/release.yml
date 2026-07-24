@@ -1,0 +1,65 @@
+name: Create GitHub Release on tag push
+
+# vX.Y.Z 形式のタグがpushされたら、そのタグでGitHub Releaseを自動作成する。
+# trading-system/releases/<tag>/NOTES.md が存在すればその内容を本文に使い、
+# 無ければGitHubの自動生成リリースノート(--generate-notes)を使う。
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # --generate-notes は直前のタグとの差分からノートを組み立てるため、
+          # タグ履歴を含む全履歴が必要になる
+          fetch-depth: 0
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          NOTES_FILE="trading-system/releases/${TAG}/NOTES.md"
+          echo "Tag: ${TAG}"
+          echo "Notes file: ${NOTES_FILE}"
+
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            EXISTS=true
+          else
+            EXISTS=false
+          fi
+
+          if [ -f "${NOTES_FILE}" ]; then
+            echo "NOTES.md found. Using it as the release body."
+            if [ "${EXISTS}" = "true" ]; then
+              gh release edit "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+                --title "${TAG}" --notes-file "${NOTES_FILE}"
+            else
+              gh release create "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+                --title "${TAG}" --notes-file "${NOTES_FILE}"
+            fi
+          else
+            echo "NOTES.md not found. Falling back to auto-generated release notes."
+            if [ "${EXISTS}" = "true" ]; then
+              gh release edit "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+                --title "${TAG}" --generate-notes
+            else
+              gh release create "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+                --title "${TAG}" --generate-notes
+            fi
+          fi

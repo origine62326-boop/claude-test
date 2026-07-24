@@ -134,13 +134,16 @@ pytest tests/ -v
 6. そのバージョンでバックテストを実行し、`scripts/run_analysis.py` の出力を
    `releases/vX.Y.Z/` にコピーして記録する
 7. 前バージョンがあれば `scripts/compare_backtests.py` で比較レポートを作成し、
-   同様に `releases/vX.Y.Z/` へ記録する
+   `releases/vX.Y.Z/NOTES.md` を作成・コミットする（このファイルがあれば
+   GitHub Releaseの本文に自動で使われる。無くても後述の自動生成ノートで代替される）
 8. `git tag -a vX.Y.Z -m "..."` でタグを作成し、GitHubへpushする
-9. GitHub Releaseを作成する（現状Claude側にRelease作成用のツールがないため、
-   タグをpushした後、人間がGitHub上の「Draft a release」から作成する。
-   本文は `releases/vX.Y.Z/NOTES.md` の内容をベースにする）
+9. GitHub Releaseは**自動作成される**。`.github/workflows/release.yml` が
+   `vX.Y.Z` 形式のタグpushをトリガーに、`releases/vX.Y.Z/NOTES.md` があれば
+   それを本文として、無ければGitHubの自動生成ノート(`--generate-notes`)を使って
+   Releaseを作成する。手動操作は不要。
 
 詳細な `releases/` の運用は `releases/README.md` を参照してください。
+自動化の仕組みは `.github/workflows/release.yml` を参照してください。
 
 ## 現在の既知の制約
 
