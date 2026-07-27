@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # --generate-notes は直前のタグとの差分からノートを組み立てるため、
           # タグ履歴を含む全履歴が必要になる
