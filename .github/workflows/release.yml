@@ -8,12 +8,19 @@ on:
   push:
     tags:
       - "v*.*.*"
+  # 動作確認用の手動実行。既存タグを指定して同じロジックをそのまま試せる
+  # (例: tag=v0.2.0 を指定して実行すると、v0.2.0のReleaseが存在すればeditされる)。
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release/更新対象のタグ名(例: v0.2.0)。動作確認用。"
+        required: true
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -30,7 +37,7 @@ jobs:
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
 
