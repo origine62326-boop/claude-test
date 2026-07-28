@@ -11,16 +11,37 @@
   `research/governance/`, `research/roadmap/`, `research/audits/` の各テンプレート・初期登録
 - 完了条件: 本文書一式がレビュー可能な状態でブランチにpushされていること（コード変更なし）
 
-## Phase R1: 既存EAとLSTMコードの棚卸し（本作業で着手）
+## Phase R1: 既存EA・LSTM・レガシーコードの状態固定と棚卸し（PR #8レビューを受け範囲を拡大）
 
-- `research/audits/CURRENT_SYSTEM_AUDIT.md`の作成
+R2（データ品質基盤）へ進む前に、まず現状を固定点として確定させることを優先する。
+
+### 完了済み（本PRで着手）
+
+- `research/audits/CURRENT_SYSTEM_AUDIT.md`の作成（EA, Phase5-1, EMA/ADX/ATRロジック, LSTM予測,
+  解析パイプライン等をA-Eに分類、Evidenceレベルを推測なしに付与）
 - `research/audits/GAP_ANALYSIS.md`の作成
-- 完了条件: 既存コンポーネント（EA, Phase5-1, EMA/ADX/ATRロジック, LSTM予測, 解析パイプライン等）が
-  A-Eに分類され、Evidenceレベルが推測なしに付与されていること
+
+### 残タスク（R2着手前に完了させる）
+
+- **main・未マージブランチ・レガシーコードの状態固定**: `main`(EA v0.1.0, Phase1-4)、
+  `claude/ea-v0.3.0-risk-management`(Phase 5-1, 未マージ)、レガシーフォルダ
+  `USDJPY_LowRisk_Trend_EA/`(v0.1.0バックアップ)の各コミットSHAを固定点として記録し、
+  `MODEL_REGISTRY.md`のcode_commit列等に反映する
+- **EA/LSTM/解析コードのバージョン整理**: `trading-system/CHANGELOG.md`・`mt4/CHANGELOG_EA.md`と、
+  未マージブランチ側の変更内容(Phase 5-1)の関係を整理し、`configs/risk_limits.yaml`の
+  `implementation_status`(本PRで追加)のような形で、コードのバージョンと機能状態の対応を
+  明示できるようにする
+- **既存バックテストの再現**: これまで会話内でスクリーンショット(DS002)のみで確認していた
+  観察値(UNVERIFIED_OBSERVATION、`MODEL_REGISTRY.md` M001参照)を、実際の`.htm`レポートを用いて
+  `trading-system`パイプラインで正式に再現する。ユーザーから実データの提供を受け次第着手する
+
+- 完了条件: 上記3項目が完了し、少なくとも1件の既存バックテストがパイプラインを通して再現され、
+  UNVERIFIED_OBSERVATIONから正式なResearch Result（`RESEARCH_REPORT_TEMPLATE.md`形式）へ
+  昇格していること
 
 ## Phase R2: データ品質基盤
 
-- `DATASET_REGISTRY.md`のDS001（MT4バックテストレポート）を実データで正式登録（現状はディレクトリのみ）
+- Phase R1で再現したデータセット（DS001）を`DATASET_REGISTRY.md`に正式登録（`status = ACTIVE`）
 - 欠損・重複・異常値・タイムゾーン・時刻順序・未来データ混入チェックの実装方針を確定
 - 完了条件: 少なくとも1つのデータセットが`status = ACTIVE`になり、既知の品質問題が
   `known_issues`に記録されていること

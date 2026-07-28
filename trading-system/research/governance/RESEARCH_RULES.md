@@ -3,6 +3,18 @@
 `trading-system/RESEARCH_CHARTER.md`を運用レベルに落とし込んだルール集。矛盾がある場合は
 `RESEARCH_CHARTER.md`を優先する。
 
+## 0. 共通ステータスタグ（2026-07-28, PR #8レビューで導入）
+
+台帳・レジストリ・仕様書全体で、次の2つのタグを共通の目印として使う。新しい文書を追加する際も
+同じ表記を使うこと（表記ゆれを作らない）。
+
+- **`UNVERIFIED_OBSERVATION`**: 会話・スクリーンショット・手動確認等に基づく、パイプラインを
+  通していない観察値。MT4 HTMLレポート・使用パラメータ・コードSHA・データ条件・ファイルハッシュが
+  揃い、パイプラインを通して再現されるまで、正式なResearch ResultやEvidenceとして登録しない。
+- **`IMPLEMENTED_ON_UNMERGED_BRANCH`**: 未マージブランチ上にのみ実装が存在する機能。mainに
+  実装済みであるかのような表現（「実装済み」とだけ書く等）を禁止し、必ずsource_branchと
+  merge_statusを併記する。
+
 ## 1. 事前登録 (Pre-registration)
 
 - 実験を実行する前に、`EXPERIMENT_TEMPLATE.md`のtrain/validation/test期間、baseline、

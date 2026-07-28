@@ -19,16 +19,32 @@
 以下は、未マージブランチ`claude/ea-v0.3.0-risk-management`上のコード（本セッション内で読み取り済み）を
 根拠とした整理である。**このリポジトリ(main起点の本ブランチ)には該当コードは存在しない**点に注意。
 
+### ステータス: `[IMPLEMENTED_ON_UNMERGED_BRANCH]`
+
+以下の日次損失上限・連敗制限（Phase 5-1）に関する記述はすべて、次の状態を前提とする。
+**mainに実装済みという意味では一切ない。** 各フィールドの定義・現在値は
+`trading-system/configs/risk_limits.yaml`の該当コメントと同期させること。
+
+| フィールド | 値 |
+|---|---|
+| source_branch | `claude/ea-v0.3.0-risk-management` |
+| merge_status | `NOT_MERGED_TO_MAIN` |
+| compile_status | `COMPILE_OK_0_ERRORS_0_WARNINGS`（当該ブランチのCHANGELOG記載に基づく。本ブランチでの再確認はしていない） |
+| backtest_status | `UNVERIFIED_OBSERVATION`（会話内スクリーンショットのみ。`research/data/DATASET_REGISTRY.md` DS002参照。パイプライン未検証） |
+| full_test_plan_status | `PARTIALLY_COMPLETE`（`trading-system/mt4/TEST_PLAN_PHASE5-1.md`全20項目中、コードレビュー代替3項目のみ確認済み。実機ストラテジーテスターでの確認は未実施） |
+| demo_forward_status | `NOT_STARTED` |
+| live_approval_status | `NOT_APPROVED`（`AllowLiveTrading=false`を維持） |
+
 ## Risk Engineが管理すべき項目（憲章第15節）と現状の対応
 
 | 憲章が定める管理項目 | 現状 | 該当箇所（未マージブランチ） | 分類 |
 |---|---|---|---|
-| 最大日次損失 | 実装あり（当日ラッチ方式、回復しても当日中は解除しない） | `IsDailyLossLimitReached()`, `MaxDailyLossPercent`入力 | B（Signal/Risk分離を前提に移植可能） |
+| 最大日次損失 | `[IMPLEMENTED_ON_UNMERGED_BRANCH]` 実装あり（当日ラッチ方式、回復しても当日中は解除しない） | `IsDailyLossLimitReached()`, `MaxDailyLossPercent`入力 | B（Signal/Risk分離を前提に移植可能） |
 | 1取引リスク | 実装あり（残高×RiskPercent%からロット逆算） | `CalculateLotSize()`, `RiskPercent`入力 | B |
 | ロット | 実装あり（最小ロット単位切り捨て、ブローカー上限考慮） | `CalculateLotSizeForBalance()`, `NormalizeLotDown()` | B |
 | 同時保有数 | 実装あり（Symbol+Magic一致で最大1ポジション固定） | `HasOpenPosition()` | B |
 | 緊急停止 | 部分実装（SL/TP設定失敗時の緊急決済のみ。手動/外部トリガーによる全体緊急停止は未実装） | `EmergencyCloseUnprotectedPosition()` | C |
-| 連続損失 | 実装あり（当日の連敗数カウント、上限到達で当日エントリー停止） | `IsMaxConsecutiveLossesReached()`, `MaxConsecutiveLosses`入力 | B |
+| 連続損失 | `[IMPLEMENTED_ON_UNMERGED_BRANCH]` 実装あり（当日の連敗数カウント、上限到達で当日エントリー停止） | `IsMaxConsecutiveLossesReached()`, `MaxConsecutiveLosses`入力 | B |
 | 最大ドローダウン | 未実装（EA内でDD自体を監視・停止する仕組みはない。`configs/acceptance_criteria.yaml`側でバックテスト後の合否判定に`max_drawdown_pct`があるのみ） | (該当なし) | D |
 | スプレッド上限 | 実装あり | `IsSpreadAcceptable()`, `MaxSpreadPips`入力 | B |
 | 発注制約 | 実装あり（リトライ上限、TradeContext待機、リトライ可否のエラー分類） | `SafeOrderSend()`, `WaitForTradeContext()`, `IsRetryableError()` | B |
