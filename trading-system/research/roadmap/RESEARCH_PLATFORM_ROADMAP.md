@@ -11,40 +11,86 @@
   `research/governance/`, `research/roadmap/`, `research/audits/` の各テンプレート・初期登録
 - 完了条件: 本文書一式がレビュー可能な状態でブランチにpushされていること（コード変更なし）
 
-## Phase R1: 既存EA・LSTM・レガシーコードの状態固定と棚卸し（PR #8レビューを受け範囲を拡大）
+## Phase R1: 既存EA・LSTM・レガシーコードの状態固定と棚卸し（2026-07-28、5ステップの順序を確定）
 
-R2（データ品質基盤）へ進む前に、まず現状を固定点として確定させることを優先する。
+R2（データ品質基盤）へ進む前に、まず現状を固定点として確定させることを優先する。以下の5ステップは
+この順序で実施する（後段のステップは前段の成果物を前提とする）。
 
-### 完了済み（本PRで着手）
+```
+既存システムの状態固定
+  ↓
+EA・LSTM・解析コードのバージョン整理
+  ↓
+未マージPhase 5-1の扱い決定
+  ↓
+MT4バックテストの正式再現
+  ↓
+Dataset / Experiment登録
+```
 
+### ステップ1: 既存システムの状態固定（完了済み、本PRで着手）
+
+- `main`(EA v0.1.0, Phase1-4)、`claude/ea-v0.3.0-risk-management`(Phase 5-1, 未マージ)、
+  レガシーフォルダ`USDJPY_LowRisk_Trend_EA/`(v0.1.0バックアップ)の各コミットSHAを固定点として記録
 - `research/audits/CURRENT_SYSTEM_AUDIT.md`の作成（EA, Phase5-1, EMA/ADX/ATRロジック, LSTM予測,
   解析パイプライン等をA-Eに分類、Evidenceレベルを推測なしに付与）
 - `research/audits/GAP_ANALYSIS.md`の作成
+- 完了条件: 主要コンポーネントのコミットSHAが特定され、監査・ギャップ分析が完了していること
 
-### 残タスク（R2着手前に完了させる）
+### ステップ2: EA・LSTM・解析コードのバージョン整理（残タスク）
 
-- **main・未マージブランチ・レガシーコードの状態固定**: `main`(EA v0.1.0, Phase1-4)、
-  `claude/ea-v0.3.0-risk-management`(Phase 5-1, 未マージ)、レガシーフォルダ
-  `USDJPY_LowRisk_Trend_EA/`(v0.1.0バックアップ)の各コミットSHAを固定点として記録し、
-  `MODEL_REGISTRY.md`のcode_commit列等に反映する
-- **EA/LSTM/解析コードのバージョン整理**: `trading-system/CHANGELOG.md`・`mt4/CHANGELOG_EA.md`と、
-  未マージブランチ側の変更内容(Phase 5-1)の関係を整理し、`configs/risk_limits.yaml`の
-  `implementation_status`(本PRで追加)のような形で、コードのバージョンと機能状態の対応を
-  明示できるようにする
-- **既存バックテストの再現**: これまで会話内でスクリーンショット(DS002)のみで確認していた
-  観察値(UNVERIFIED_OBSERVATION、`MODEL_REGISTRY.md` M001参照)を、実際の`.htm`レポートを用いて
-  `trading-system`パイプラインで正式に再現する。ユーザーから実データの提供を受け次第着手する
+- `trading-system/CHANGELOG.md`・`mt4/CHANGELOG_EA.md`と、未マージブランチ側の変更内容(Phase 5-1)の
+  関係を整理する
+- `configs/risk_limits.yaml`の`implementation_status`ブロック（本PRで追加）のように、コードの
+  バージョンと機能状態の対応を明示できる形を、EA以外(LSTM, 解析パイプライン)にも広げるか検討する
+- `MODEL_REGISTRY.md`のcode_commit列等にステップ1で固定したSHAを反映する
+- 完了条件: EA/LSTM/解析パイプラインそれぞれの現在バージョンと、機能ごとの実装状態
+  （mainか未マージブランチか）が1箇所から追跡できること
 
-- 完了条件: 上記3項目が完了し、少なくとも1件の既存バックテストがパイプラインを通して再現され、
+### ステップ3: 未マージPhase 5-1の扱い決定（残タスク、人間の意思決定が必要）
+
+- `claude/ea-v0.3.0-risk-management`(Phase 5-1)を今後どう扱うか、次の選択肢等を人間が決定する
+  （例: (a) `full_test_plan_status`が完了し次第mainへマージする、(b) 研究基盤側でH002の実験結果が
+  出るまでmainへはマージせず現状維持する、(c) その他の方針）
+- 決定した方針と理由を、`RISK_ENGINE_SPEC.md`の「未確定・要検討事項」および
+  `configs/risk_limits.yaml`の`implementation_status.merge_status`に反映する
+  （決定するまでは`NOT_MERGED_TO_MAIN`のまま維持し、先回りしてマージ作業やmain実装済み扱いの
+  記述を行わない）
+- 完了条件: mainへのマージ方針（する/しない/条件付き）が人間により明示的に決定され、
+  文書化されていること。本ロードマップ自体は、この決定が下るまでEA側のコード変更を伴わない
+
+### ステップ4: MT4バックテストの正式再現（残タスク、ユーザーからの実データ提供待ち）
+
+- これまで会話内でスクリーンショット(DS002)のみで確認していた観察値
+  (`UNVERIFIED_OBSERVATION`、`MODEL_REGISTRY.md` M001参照)を、実際の`.htm`レポートを用いて
+  `trading-system`パイプライン(`parse_mt4_report.py`等)で正式に再現する
+- 完了条件: 少なくとも1件の既存バックテストがパイプラインを通して再現され、数値が
+  `UNVERIFIED_OBSERVATION`から検証可能な状態になっていること（まだ正式なResearch Result化は
+  次のステップで行う）
+
+### ステップ5: Dataset / Experiment登録（残タスク）
+
+- ステップ4で再現したデータを`DATASET_REGISTRY.md`のDS001として正式登録する（`status = ACTIVE`）
+- H001（EMA/ADX/ATRトレンドフォロー仮説）について、`EXPERIMENT_TEMPLATE.md`形式で最初の
+  experiment_id（例: EXP-001）を発行し、DS001を用いた実験として事前登録する
+- 完了条件: DS001が`status = ACTIVE`になり、少なくとも1件のexperiment_idが発行され、
   UNVERIFIED_OBSERVATIONから正式なResearch Result（`RESEARCH_REPORT_TEMPLATE.md`形式）へ
-  昇格していること
+  昇格する準備が整っていること
+
+### Phase R1全体の完了条件
+
+上記5ステップすべてが完了していること。
 
 ## Phase R2: データ品質基盤
 
-- Phase R1で再現したデータセット（DS001）を`DATASET_REGISTRY.md`に正式登録（`status = ACTIVE`）
-- 欠損・重複・異常値・タイムゾーン・時刻順序・未来データ混入チェックの実装方針を確定
-- 完了条件: 少なくとも1つのデータセットが`status = ACTIVE`になり、既知の品質問題が
-  `known_issues`に記録されていること
+DS001自体の登録はPhase R1ステップ5で完了させるため、R2では個別データセットの登録ではなく、
+**今後追加される全てのデータセットに適用する共通の品質チェック基盤**を対象とする。
+
+- 欠損・重複・異常値・タイムゾーン・時刻順序・未来データ混入チェックを、`DATASET_REGISTRY.md`の
+  `known_issues`列への手動記載だけでなく、再利用可能な仕組み（チェックスクリプトまたは手順書）として
+  整備する方針を確定する
+- 完了条件: 少なくとも1つの新規データセットが、上記チェックを経て`status = ACTIVE`になり、
+  既知の品質問題が`known_issues`に記録されていること
 
 ## Phase R3: 再現可能なバックテスト基盤
 

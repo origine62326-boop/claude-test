@@ -70,6 +70,10 @@ A=そのまま流用可能 / B=修正すれば流用可能 / C=仮説として�
 
 ## 未確定・要検討事項
 
+- **未マージPhase 5-1(`claude/ea-v0.3.0-risk-management`)の扱い**は、`RESEARCH_PLATFORM_ROADMAP.md`
+  Phase R1ステップ3として、人間による明示的な決定待ちとする（マージする/しない/条件付き等）。
+  決定が下るまでは`configs/risk_limits.yaml`の`implementation_status.merge_status`を
+  `NOT_MERGED_TO_MAIN`のまま維持し、本文書・関連文書もそれに合わせて更新しない先回りをしない。
 - 最大ドローダウンによる自動停止（EA内でのリアルタイムDD監視）は、憲章が求める項目だが現状未実装。
   実装するかどうか、するとすればどのタイミング（Phase R8のRisk Engine統合時）で検討するかは未確定。
 - `TradingStartHour`等の稼働時間制約は、main・未マージブランチ双方で入力パラメータのみ存在し未接続。
