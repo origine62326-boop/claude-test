@@ -29,9 +29,9 @@
 |---|---|
 | source_branch | `claude/ea-v0.3.0-risk-management` |
 | merge_status | `NOT_MERGED_TO_MAIN` |
-| compile_status | `COMPILE_OK_0_ERRORS_0_WARNINGS`（当該ブランチのCHANGELOG記載に基づく。本ブランチでの再確認はしていない） |
+| compile_status | `PENDING_USER_METAEDITOR_CONFIRMATION`（当該ブランチの`trading-system/CHANGELOG.md`に「コンパイル確認・バックテスト検証待ちのため未タグ・未リリース」「コンパイル確認はユーザー環境のMetaEditorで実施が必要（このセッションではMQL4コンパイラを実行できないため、手動コードレビューのみ実施）」と明記されている。0 errors/0 warningsの確認は**まだ得られていない**） |
 | backtest_status | `UNVERIFIED_OBSERVATION`（会話内スクリーンショットのみ。`research/data/DATASET_REGISTRY.md` DS002参照。パイプライン未検証） |
-| full_test_plan_status | `PARTIALLY_COMPLETE`（`trading-system/mt4/TEST_PLAN_PHASE5-1.md`全20項目中、コードレビュー代替3項目のみ確認済み。実機ストラテジーテスターでの確認は未実施） |
+| full_test_plan_status | `PARTIALLY_COMPLETE`（`trading-system/mt4/TEST_PLAN_PHASE5-1.md`全20項目中、コードレビュー代替5項目(#11, #13, #14, #15, #16)のみ確認済み。実機ストラテジーテスターでの確認は未実施） |
 | demo_forward_status | `NOT_STARTED` |
 | live_approval_status | `NOT_APPROVED`（`AllowLiveTrading=false`を維持） |
 
