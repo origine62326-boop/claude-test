@@ -37,15 +37,24 @@ Dataset / Experiment登録
 - `research/audits/GAP_ANALYSIS.md`の作成
 - 完了条件: 主要コンポーネントのコミットSHAが特定され、監査・ギャップ分析が完了していること
 
-### ステップ2: EA・LSTM・解析コードのバージョン整理（残タスク）
+### ステップ2: EA・LSTM・解析コードのバージョン整理（着手済み、台帳作成完了）
 
-- `trading-system/CHANGELOG.md`・`mt4/CHANGELOG_EA.md`と、未マージブランチ側の変更内容(Phase 5-1)の
-  関係を整理する
-- `configs/risk_limits.yaml`の`implementation_status`ブロック（本PRで追加）のように、コードの
-  バージョンと機能状態の対応を明示できる形を、EA以外(LSTM, 解析パイプライン)にも広げるか検討する
-- `MODEL_REGISTRY.md`のcode_commit列等にステップ1で固定したSHAを反映する
+- `research/versions/CODE_COMPONENT_REGISTRY.md`を作成。EA(main/Phase1-4)・EA(Phase5-1/未マージ)・
+  レガシーEAバックアップ・LSTM・Python解析コード全般・MT4レポート解析・Risk Engine(仕様のみ)・
+  Decision Engine(仕様のみ)の8コンポーネントを、Component ID/Version/Git Commit SHA/Branch/Status/
+  Dependencies/Owner/Last Verified/Related Dataset/Related Experimentの10項目で固定点として記録
+- `research/versions/VERSION_REGISTRY.md`を作成。`trading-system/CHANGELOG.md`のプロジェクトバージョン
+  (v0.1.0, v0.2.0, v0.3.0開発中, インフラ, 本研究基盤)と、上記コンポーネントの対応を整理
+- `research/versions/BACKTEST_REPRODUCIBILITY.md`を作成。fixtureベースのパーサー再現性(pytest 36件、
+  実測確認済み)と、実際のバックテスト観察値(DS002等)の再現性を区別して記録。この過程で
+  `releases/v0.1.0/NOTES.md`の写真ベース参考値2件が`DATASET_REGISTRY.md`未登録であるという
+  新たなギャップを発見（`BACKTEST_REPRODUCIBILITY.md` BR003参照）
+- 全てのGit Commit SHAは`git log`/`git cat-file -e`で実在確認済み（推測・パディングによる
+  捏造SHAがないことを機械的に検証済み）
+- 残タスク: `MODEL_REGISTRY.md`のcode_commit列へステップ1・2で固定したSHAを反映する作業は未実施
 - 完了条件: EA/LSTM/解析パイプラインそれぞれの現在バージョンと、機能ごとの実装状態
-  （mainか未マージブランチか）が1箇所から追跡できること
+  （mainか未マージブランチか）が1箇所から追跡できること（3台帳の作成により概ね達成。
+  `MODEL_REGISTRY.md`への反映が残タスク）
 
 ### ステップ3: 未マージPhase 5-1の扱い決定（残タスク、人間の意思決定が必要）
 

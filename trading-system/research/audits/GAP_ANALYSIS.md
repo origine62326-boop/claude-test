@@ -98,6 +98,17 @@
     評価するのか、方針が未確定。
     → 対応: `FEATURE_REGISTRY.md`にF103として登録済み。方針決定は次の承認事項とする。
 
+11. **[2026-07-28新規発見] `releases/v0.1.0/NOTES.md`記載の写真ベース参考値2件が`DATASET_REGISTRY.md`に
+    未登録。** Phase R1ステップ2（`research/versions/BACKTEST_REPRODUCIBILITY.md`作成）の過程で発見。
+    「約2年間/初期証拠金1万円: 527取引・PF1.06」「直近1年間/初期証拠金10万円: 192取引・PF0.76」という
+    2件の参考値が、DS002と同様に画像ベース・パイプライン未検証のまま`releases/v0.1.0/NOTES.md`に
+    記載されている。当該NOTES.md自体が「本パイプラインを通していない参考値であり、正式な記録ではない」
+    と明記しているため信頼性を偽装するものではないが、`DATASET_REGISTRY.md`側での一元管理という
+    観点では抜けている。
+    → 対応: `BACKTEST_REPRODUCIBILITY.md`のBR003として記録済み。DS-ID発行は本作業のスコープ外
+    （今回の依頼はVERSION/CODE_COMPONENT/BACKTEST_REPRODUCIBILITYの3ファイル作成のみ）のため、
+    次の承認事項として報告する。
+
 ## P3: 将来拡張
 
 11. **憲章が求めるモデル分離構成(Price/News/Interest Rate/Liquidity/Event/Regime/Ensemble)のうち、
