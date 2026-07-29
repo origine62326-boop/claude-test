@@ -77,14 +77,17 @@ Dataset / Experiment登録
   `UNVERIFIED_OBSERVATION`から検証可能な状態になっていること（まだ正式なResearch Result化は
   次のステップで行う）
 
-### ステップ5: Dataset / Experiment登録（残タスク）
+### ステップ5: Dataset / Experiment登録（一部着手済み）
 
-- ステップ4で再現したデータを`DATASET_REGISTRY.md`のDS001として正式登録する（`status = ACTIVE`）
-- H001（EMA/ADX/ATRトレンドフォロー仮説）について、`EXPERIMENT_TEMPLATE.md`形式で最初の
-  experiment_id（例: EXP-001）を発行し、DS001を用いた実験として事前登録する
-- 完了条件: DS001が`status = ACTIVE`になり、少なくとも1件のexperiment_idが発行され、
+- `research/experiments/EXP-001_ema_adx_trend_baseline.md`を作成済み。H001向けの実験を、
+  実データを見る前に事前登録した（baseline, データ分割方法, コスト前提の取得方針,
+  `configs/acceptance_criteria.yaml`を流用した採用/棄却条件）。status=`DRAFT`
+  （`HYPOTHESIS_REGISTRY.md` H001のrelated_experimentsにも反映済み）
+- 残タスク: ステップ4で再現したデータを`DATASET_REGISTRY.md`のDS001として正式登録する
+  （`status = ACTIVE`）。EXP-001はデータ受領後`READY`→`RUNNING`へ更新する
+- 完了条件: DS001が`status = ACTIVE`になり、EXP-001が実データで実行され、
   UNVERIFIED_OBSERVATIONから正式なResearch Result（`RESEARCH_REPORT_TEMPLATE.md`形式）へ
-  昇格する準備が整っていること
+  昇格していること
 
 ### Phase R1全体の完了条件
 
