@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //| USDJPY_LowRisk_Trend_EA.mq4                                      |
 //| USD/JPY H1 順張り（押し目買い・戻り売り）低リスク検証用EA         |
-//| v0.1.0 - Phase 1〜4 実装版                                        |
+//| v0.3.0(開発中) - Phase 1〜4 + Phase 5-1(日次損失上限・連敗制限)   |
 //|                                                                    |
 //| 重要:                                                              |
 //|  - バックテストおよびデモ口座での検証を目的とする                  |
@@ -12,10 +12,10 @@
 //+------------------------------------------------------------------+
 #property copyright "USDJPY_LowRisk_Trend_EA"
 // #property version はMQL5 Marketの書式規約(xxx.yyy形式、メジャー1以上)に合わせた表記。
-// 開発進捗としてのバージョン(Phase1-4=v0.1.0)はCHANGELOG.mdで管理する。
+// 開発進捗としてのバージョン(v0.3.0開発中)はtrading-system/CHANGELOG.mdで管理する。
 #property version   "1.00"
 #property strict
-#property description "USD/JPY H1 押し目買い・戻り売り 低リスク順張りEA (v0.1: Phase1-4)"
+#property description "USD/JPY H1 押し目買い・戻り売り 低リスク順張りEA (v0.3.0開発中: Phase1-4 + Phase5-1)"
 
 #include <stdlib.mqh>   // ErrorDescription() を使用するため
 
@@ -30,9 +30,9 @@ input int    MagicNumber            = 20260714; // このEA専用のマジック
 input double RiskPercent            = 0.5;   // 1トレードの許容損失（口座残高に対する%, 0.1〜1.0）
 input double MaximumLot             = 1.0;   // 発注ロットの上限
 
-// --- 日次/連敗制限 (Phase 6で機能実装予定。現状は入力値検証のみ) ---
-input double MaxDailyLossPercent    = 2.0;   // 1日の許容損失（口座残高に対する%）
-input int    MaxConsecutiveLosses   = 3;     // 最大許容連敗数
+// --- 日次/連敗制限 (Phase 5-1で実装) ---
+input double MaxDailyLossPercent    = 2.0;   // 1日の許容損失（口座残高に対する%）。到達後は当日中ラッチされ回復しても解除しない
+input int    MaxConsecutiveLosses   = 3;     // 最大許容連敗数（当日限定でカウント）
 
 // --- トレンド判定EMA ---
 input int    FastEMAPeriod          = 20;    // 短期EMA期間
@@ -90,6 +90,16 @@ input bool   AllowLiveTrading       = false; // 実口座での新規発注を�
 //====================================================================
 bool     g_initializedOk = false;
 datetime g_lastProcessedBarTime = 0;
+
+// --- Phase5-1: 日次損失上限・連敗制限用 ---
+const double PNL_EPSILON = 0.01; // 損益0とみなす許容誤差(口座通貨単位)
+
+int    g_dailyRefEstablishedDate = 0;   // DailyRiskReferenceBalanceが確立済みのServerDateInt。0=未確立、-1=確立失敗(判定不能)
+double g_dailyRiskReferenceBalance = 0.0;
+
+bool   g_dailyLossLimitLogged        = false; // 当日分の「到達しました」ログを出力済みか
+bool   g_consecutiveLossLimitLogged  = false;
+int    g_logSuppressionDate          = 0;     // 上記2フラグをリセットすべきかの判定に使うServerDateInt
 
 //====================================================================
 // ログ補助
@@ -213,13 +223,67 @@ bool ValidateInputs()
 }
 
 //====================================================================
-// LastBarTime の永続化 (GlobalVariable)
+// サーバー日付ユーティリティ
 //====================================================================
-string GVName(string suffix)
+int ServerDateInt(datetime t)
 {
-   return "LRT_" + IntegerToString(MagicNumber) + "_" + suffix;
+   return TimeYear(t) * 10000 + TimeMonth(t) * 100 + TimeDay(t);
 }
 
+//====================================================================
+// GlobalVariable命名規則
+//
+// EA識別子・口座番号・接続サーバー名・Symbol・MagicNumberから求めた
+// FNV-1a 32bitハッシュ(8桁16進)を使い、"LRT_<hash>_<用途名>" の形式にする。
+// AccountServer()はブローカーによって長さが不定(20文字を超える場合もある)ため、
+// 素の文字列連結ではなくハッシュ化することで63文字制限に確実に収める。
+//
+// 注意: FNV-1a 32bitは理論上衝突がゼロではない。「衝突しない保証」ではなく、
+// 代表的な組み合わせ(口座番号・サーバー名・Symbol・MagicNumberを変えたケース)で
+// 異なるハッシュ値になることを確認する、という実用上の位置づけとする。
+//
+// ストラテジーテスター実行中は"LRT_"の代わりに"TST_"を使い、実運用の値と
+// 完全に分離する。
+//====================================================================
+uint SimpleHash32(string text)
+{
+   uint hash = 2166136261; // FNV-1a オフセット基底
+   int len = StringLen(text);
+   for(int i=0; i<len; i++)
+   {
+      hash = hash ^ (uint)StringGetCharacter(text, i);
+      hash = hash * 16777619; // FNV素数(32bitで自然にラップアラウンドする)
+   }
+   return hash;
+}
+
+string GVHashHex()
+{
+   string keyBase = AccountServer() + "|" + IntegerToString(AccountNumber()) + "|" +
+                    Symbol() + "|" + IntegerToString(MagicNumber);
+   return StringFormat("%08X", SimpleHash32(keyBase));
+}
+
+string GVName(string suffix)
+{
+   string prefix = IsTesting() ? "TST" : "LRT";
+   return prefix + "_" + GVHashHex() + "_" + suffix;
+}
+
+// ストラテジーテスター実行時、前回テストで残ったGlobalVariable(TST_プレフィックス)を
+// 今回のテストへ持ち越さないよう、OnInitの冒頭で必ずクリアする。実運用(LRT_)側は対象外。
+void ClearTesterGlobalVariablesIfNeeded()
+{
+   if(!IsTesting()) return;
+
+   string prefix = "TST_" + GVHashHex() + "_";
+   int deleted = GlobalVariablesDeleteAll(prefix);
+   LogInfo("テスター用GlobalVariableをクリアしました prefix=" + prefix + " 削除件数=" + IntegerToString(deleted));
+}
+
+//====================================================================
+// LastBarTime の永続化 (GlobalVariable)
+//====================================================================
 void InitLastProcessedBarTime()
 {
    string name = GVName("LastBarTime");
@@ -435,6 +499,302 @@ bool HasOpenPosition()
       if(OrderType()==OP_BUY || OrderType()==OP_SELL) return true;
    }
    return false;
+}
+
+//====================================================================
+// 日次損失上限・連敗制限 (Phase 5-1)
+//
+// 対象は Symbol()+MagicNumber 一致・OrderType が OP_BUY/OP_SELL の取引のみ。
+// これにより手動取引・他EA・入出金(OP_BALANCE/OP_CREDIT)は自動的に除外される。
+// 判定できない場合は必ず「到達扱い(=新規エントリー禁止)」に倒す。
+// 新規エントリーのみを止め、既存ポジションの管理には一切影響しない。
+//====================================================================
+
+bool IsValidPositiveNumber(double v) { return (MathIsValidNumber(v) && v > 0.0); }
+
+// --- 当日確定損益 / 保有中の含み損 ---
+
+// 当日決済分(Symbol+Magic一致)の Profit+Commission+Swap 合計。
+// 日付不一致の履歴に遭遇してもBREAKせず、全履歴を走査してフィルタする
+// (MODE_HISTORYの並び順は決済時刻順を保証しないため)。
+double GetTodayRealizedNet(bool &ok)
+{
+   ok = true;
+   int today = ServerDateInt(TimeCurrent());
+   double sum = 0.0;
+   int total = OrdersHistoryTotal();
+
+   for(int i=0; i<total; i++)
+   {
+      if(!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+      {
+         ok = false;
+         return 0.0;
+      }
+      if(OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
+      if(OrderType()!=OP_BUY && OrderType()!=OP_SELL) continue;
+      if(ServerDateInt(OrderCloseTime())!=today) continue;
+
+      sum += OrderProfit() + OrderCommission() + OrderSwap();
+   }
+
+   return sum;
+}
+
+// 保有中(Symbol+Magic一致)の含み損のみを注文ごとに判定して合算する。
+// 全注文のfloating損益を先に合算してからMINを取るのではなく、個別の注文が
+// 損失(<0)である場合のみ加算する。これにより、あるポジションの含み益で
+// 別ポジションの含み損を相殺しない(安全側)。
+double GetFloatingLossOnly(bool &ok)
+{
+   ok = true;
+   double sum = 0.0;
+   int total = OrdersTotal();
+
+   for(int i=0; i<total; i++)
+   {
+      if(!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+      {
+         ok = false;
+         return 0.0;
+      }
+      if(OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
+      if(OrderType()!=OP_BUY && OrderType()!=OP_SELL) continue;
+
+      double orderNet = OrderProfit() + OrderCommission() + OrderSwap();
+      if(orderNet < 0.0) sum += orderNet;
+   }
+
+   return sum;
+}
+
+// --- DailyRiskReferenceBalance ---
+
+// 当日開始時点の残高を確立/復元する。
+// 同日中にGlobalVariableへ確立済みの値があれば、それをそのまま復元する
+// (再計算しない=EA再起動やIsDailyLossLimitReached()の繰り返し呼び出しで
+// 基準がぶれないようにするため)。
+void EstablishOrRestoreDailyRiskReferenceBalance()
+{
+   int today = ServerDateInt(TimeCurrent());
+
+   bool dateExists    = GlobalVariableCheck(GVName("DailyRefDate"));
+   bool balanceExists = GlobalVariableCheck(GVName("DailyRefBalance"));
+
+   if(dateExists && balanceExists)
+   {
+      double storedDate = 0.0, storedBalance = 0.0;
+      bool dateOk = GlobalVariableGet(GVName("DailyRefDate"), storedDate);
+      bool balOk  = GlobalVariableGet(GVName("DailyRefBalance"), storedBalance);
+
+      if(dateOk && balOk && ((int)storedDate)==today && IsValidPositiveNumber(storedBalance))
+      {
+         g_dailyRiskReferenceBalance = storedBalance;
+         g_dailyRefEstablishedDate = today;
+         LogInfo("DailyRiskReferenceBalanceを復元しました: " + DoubleToString(storedBalance, 2));
+         return;
+      }
+      // 値が今日の日付でない、または不正 → 下の再確立処理へ進む
+   }
+
+   bool ok = false;
+   double eaPnLToday = GetTodayRealizedNet(ok);
+   if(!ok)
+   {
+      g_dailyRefEstablishedDate = -1; // 判定不能
+      LogError("当日確定損益を取得できないため、DailyRiskReferenceBalanceを確立できません");
+      return;
+   }
+
+   double reconstructed = AccountBalance() - eaPnLToday;
+   double candidate = MathMin(AccountBalance(), reconstructed);
+
+   if(!IsValidPositiveNumber(candidate))
+   {
+      g_dailyRefEstablishedDate = -1; // 判定不能
+      LogError("DailyRiskReferenceBalanceの計算結果が不正です: " + DoubleToString(candidate, 2));
+      return;
+   }
+
+   datetime setBalTime  = GlobalVariableSet(GVName("DailyRefBalance"), candidate);
+   datetime setDateTime = GlobalVariableSet(GVName("DailyRefDate"), (double)today);
+
+   if(setBalTime==0 || setDateTime==0)
+   {
+      g_dailyRefEstablishedDate = -1; // 保存に失敗した場合も未確立扱い(安全側)
+      LogError("DailyRiskReferenceBalanceのGlobalVariable保存に失敗しました");
+      return;
+   }
+
+   g_dailyRiskReferenceBalance = candidate;
+   g_dailyRefEstablishedDate = today;
+
+   if(eaPnLToday != 0.0)
+      LogInfo("日中初回起動のため近似計算を使用: eaPnLToday=" + DoubleToString(eaPnLToday, 2) +
+              " 採用値=" + DoubleToString(candidate, 2));
+   else
+      LogInfo("DailyRiskReferenceBalanceを確立しました: " + DoubleToString(candidate, 2));
+}
+
+// IsDailyLossLimitReached()の判定前に必ず呼び出す。メモリ上の確立済み日付と
+// サーバー日付が異なる場合のみ再確立処理を行う(OnInit時の確立だけに頼らない)。
+void EnsureDailyRiskReferenceBalance()
+{
+   int today = ServerDateInt(TimeCurrent());
+   if(g_dailyRefEstablishedDate == today) return;
+   EstablishOrRestoreDailyRiskReferenceBalance();
+}
+
+// --- 日次損失上限(当日ラッチ方式) ---
+//
+// 一度到達したら、その後に含み損が回復しても同一サーバー日付中はブロックし
+// 続ける(動的解除しない)。到達日をGlobalVariableへ保存し、EA再起動後も
+// 同日なら復元する。翌サーバー日付になった時点で、保存されている日付と
+// 一致しなくなるため自然に解除される。
+bool IsDailyLossLimitReached()
+{
+   EnsureDailyRiskReferenceBalance();
+   int today = ServerDateInt(TimeCurrent());
+
+   if(g_dailyRefEstablishedDate != today)
+      return true; // 基準残高が未確立=判定不能 → 安全側
+
+   double lockDateStored = 0.0;
+   bool lockOk = GlobalVariableGet(GVName("DailyLossLockDate"), lockDateStored);
+   if(lockOk && ((int)lockDateStored)==today)
+      return true; // 既に当日到達済み(ラッチ)。回復していても継続してブロック
+
+   bool netOk = false, floatOk = false;
+   double todayRealizedNet = GetTodayRealizedNet(netOk);
+   if(!netOk) return true;
+   double floatingLossOnly = GetFloatingLossOnly(floatOk);
+   if(!floatOk) return true;
+
+   double dailyNet = todayRealizedNet + floatingLossOnly;
+   double dailyLossAmount = MathMax(-dailyNet, 0.0);
+   double dailyLossLimitAmount = g_dailyRiskReferenceBalance * MaxDailyLossPercent / 100.0;
+
+   if(dailyLossAmount >= dailyLossLimitAmount)
+   {
+      datetime setResult = GlobalVariableSet(GVName("DailyLossLockDate"), (double)today);
+      if(setResult==0)
+         LogError("日次損失ラッチの保存に失敗しました。今回の判定は到達扱いを継続しますが、"
+                  "再起動すると当日中でも復元できない可能性があります");
+      return true;
+   }
+
+   return false;
+}
+
+// --- 最大連敗制限 ---
+
+struct TradeRecord
+{
+   datetime closeTime;
+   int      ticket;
+   double   pnl;
+};
+
+// 当日決済分(Symbol+Magic一致)を全履歴から収集する。走査順やMT4内部の
+// 並び順を一切仮定しない(日付不一致でもBREAKせずCONTINUEする)。
+int CollectTodayClosedTrades(TradeRecord &records[], bool &ok)
+{
+   ok = true;
+   int today = ServerDateInt(TimeCurrent());
+   int total = OrdersHistoryTotal();
+   int count = 0;
+
+   ArrayResize(records, 0);
+
+   for(int i=0; i<total; i++)
+   {
+      if(!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+      {
+         ok = false;
+         ArrayResize(records, 0);
+         return 0;
+      }
+      if(OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
+      if(OrderType()!=OP_BUY && OrderType()!=OP_SELL) continue;
+      if(ServerDateInt(OrderCloseTime())!=today) continue;
+
+      count++;
+      ArrayResize(records, count);
+      records[count-1].closeTime = OrderCloseTime();
+      records[count-1].ticket    = OrderTicket();
+      records[count-1].pnl       = OrderProfit() + OrderCommission() + OrderSwap();
+   }
+
+   return count;
+}
+
+// aがbより「新しいか同時刻でticketが大きい」場合にtrue(=降順で先に来るべき)
+bool IsNewerOrEqual(const TradeRecord &a, const TradeRecord &b)
+{
+   if(a.closeTime != b.closeTime) return a.closeTime > b.closeTime;
+   return a.ticket >= b.ticket;
+}
+
+// OrderCloseTime降順、同時刻はOrderTicket降順で明示ソートする(挿入ソート)。
+// 対象は当日分のみのため件数は少なく、計算量は問題にならない。
+void SortTradeRecordsDesc(TradeRecord &records[])
+{
+   int n = ArraySize(records);
+   for(int i=1; i<n; i++)
+   {
+      TradeRecord key = records[i];
+      int j = i - 1;
+      while(j>=0 && !IsNewerOrEqual(records[j], key))
+      {
+         records[j+1] = records[j];
+         j--;
+      }
+      records[j+1] = key;
+   }
+}
+
+// 新しい順に確認し、損失が連続した本数を数える。勝ちで打ち切り(=0リセットと
+// 同義)。ほぼ0(|pnl|<=PNL_EPSILON)の取引は無視し、カウントも途切れさせない。
+int GetConsecutiveLossCount(bool &ok)
+{
+   TradeRecord records[];
+   int n = CollectTodayClosedTrades(records, ok);
+   if(!ok) return 0;
+
+   SortTradeRecordsDesc(records);
+
+   int count = 0;
+   for(int i=0; i<n; i++)
+   {
+      double pnl = records[i].pnl;
+      if(pnl < -PNL_EPSILON) count++;
+      else if(pnl > PNL_EPSILON) break;
+      // else: ほぼ0 → 無視して次へ
+   }
+   return count;
+}
+
+// 連敗数は「新規エントリーが止まっている間は新しい決済が発生しない」ため、
+// 一度到達すると日付が変わるまで再計算しても値が変わらない。日次損失上限とは
+// 異なり、専用のラッチ(GlobalVariable)は不要と判断した。
+bool IsMaxConsecutiveLossesReached()
+{
+   bool ok = false;
+   int count = GetConsecutiveLossCount(ok);
+   if(!ok) return true; // 判定不能 → 安全側
+   return count >= MaxConsecutiveLosses;
+}
+
+// --- ログ抑制(2つの独立フラグ、サーバー日付変更後の最初のtickで解除) ---
+void UpdateLogSuppressionState()
+{
+   int today = ServerDateInt(TimeCurrent());
+   if(g_logSuppressionDate != today)
+   {
+      g_dailyLossLimitLogged = false;
+      g_consecutiveLossLimitLogged = false;
+      g_logSuppressionDate = today;
+   }
 }
 
 //====================================================================
@@ -873,7 +1233,27 @@ void TryEnter()
 
    if(!HasSufficientHistory()) return;
 
-   // 日次損失上限・連敗制限・取引時間フィルターは Phase 6/7 で実装予定(v0.1では未実装)
+   if(IsDailyLossLimitReached())
+   {
+      if(!g_dailyLossLimitLogged)
+      {
+         LogInfo("日次損失上限に到達したため新規注文を停止しています(既存ポジションの管理は継続します)");
+         g_dailyLossLimitLogged = true;
+      }
+      return;
+   }
+
+   if(IsMaxConsecutiveLossesReached())
+   {
+      if(!g_consecutiveLossLimitLogged)
+      {
+         LogInfo("最大連敗数に到達したため新規注文を停止しています(既存ポジションの管理は継続します)");
+         g_consecutiveLossLimitLogged = true;
+      }
+      return;
+   }
+
+   // 取引時間フィルターは Phase7 で実装予定(v0.3.0のこの段階では未実装)
 
    if(CheckBuySignal())
    {
@@ -898,16 +1278,23 @@ int OnInit()
    if(!ValidatePeriod())  return INIT_PARAMETERS_INCORRECT;
    if(!ValidateInputs())  return INIT_PARAMETERS_INCORRECT;
 
+   ClearTesterGlobalVariablesIfNeeded(); // 前回テストのGlobalVariableを持ち越さない
+
    InitLastProcessedBarTime();
 
-   LogInfo("=== USDJPY_LowRisk_Trend_EA v0.1 初期化 ===");
+   LogInfo("=== USDJPY_LowRisk_Trend_EA v0.3.0(Phase5-1) 初期化 ===");
    LogInfo("Symbol=" + Symbol() + " Digits=" + IntegerToString(Digits) +
            " Point=" + DoubleToString(Point, Digits) + " MagicNumber=" + IntegerToString(MagicNumber));
 
    IsLiveTradingBlocked();   // 口座種別をログに出すために1回呼び出す
    RunLotCalculationTests(); // Phase3検証ログ
 
-   LogInfo("初期化完了。Phase5(建値移動/トレーリング)・Phase6(日次損失/連敗制限)・"
+   // ここでの確立はログ・早期診断用。正しさの担保はEnsureDailyRiskReferenceBalance()による
+   // 都度呼び出し(IsDailyLossLimitReached()の判定直前)に置いており、OnInit時の確立のみには
+   // 依存しない。
+   EnsureDailyRiskReferenceBalance();
+
+   LogInfo("初期化完了。Phase5-2(建値移動/トレーリング)・"
            + "Phase7(取引時間フィルター)は未実装です。");
 
    g_initializedOk = true;
@@ -923,6 +1310,8 @@ void OnTick()
 {
    if(!g_initializedOk) return;
 
+   UpdateLogSuppressionState(); // サーバー日付変更後の最初のtickでログ抑制フラグを解除
+
    if(IsNewConfirmedBar())
    {
       // 判定結果に関わらず、まずこの足を「処理済み」として確定する。
@@ -932,5 +1321,5 @@ void OnTick()
       TryEnter();
    }
 
-   // Phase5でここにポジション管理(建値移動/トレーリング/金曜決済)を追加予定
+   // Phase5-2でここにポジション管理(建値移動/トレーリング/金曜決済)を追加予定
 }
