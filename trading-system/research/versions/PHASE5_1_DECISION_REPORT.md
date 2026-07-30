@@ -101,16 +101,25 @@ trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4 | 413 ++++++++++++++++++++++++-
 
 ## 7. バックテスト実施状況
 
-`UNVERIFIED_OBSERVATION`（`research/data/DATASET_REGISTRY.md` DS002、`BACKTEST_REPRODUCIBILITY.md` BR002参照）
+**[2026-07-29更新]** 本節作成時点（2026-07-28）ではスクリーンショットのみの`UNVERIFIED_OBSERVATION`
+だったが、その後ユーザーから実際の`.htm`レポートの提供を受け、`EXP-001_ema_adx_trend_baseline.md`
+として正式に処理・記録した（`REPRODUCIBLE`、`BACKTEST_REPRODUCIBILITY.md` BR002参照）。
+2026-07-29のユーザー指示により、この結果は**Phase5-1の効果検証としてではなく「旧版Baseline」
+（Run A）**として位置づけ直された。Phase5-1版（CC002）自体のバックテストは`EXP-002_phase5_1_risk_management.md`
+として事前登録済み（Run B、status=`READY`）だが、**まだ実行されていない**。以下、原文（2026-07-28時点）は
+そのまま残す。
 
 - 本セッション内の会話で、ユーザー提供のMT4 Strategy Testerスクリーンショット1件が共有された
   （USDJPY H1、PF 0.74、勝率29.89%、最大DD 7.45%等）
 - この観察値がPhase 5-1適用後の結果かPhase 5-1適用前(Phase1-4のみ)の結果かは、画像からは特定できない
-  （使用EA版・パラメータ設定が未確認のため）
+  （使用EA版・パラメータ設定が未確認のため）→ **[2026-07-29追記] 実ファイルを処理した後もこの点は
+  未解消のまま。`EXP-001`の`limitations`参照**
 - 実際の`.htm`レポートファイルは未取得。`trading-system`パイプライン(`parse_mt4_report.py`等)を
-  通した正式な検証は未実施
+  通した正式な検証は未実施 → **[2026-07-29追記] 完了済み（EXP-001）**
 - 日次損失上限・連敗制限が実際に機能した（狙った通りに新規エントリーを止めた）ことを示すExpertsログの
-  確認は、TEST_PLAN_PHASE5-1.mdの該当項目(#2, #5等)が未実施のため、現時点で存在しない
+  確認は、TEST_PLAN_PHASE5-1.mdの該当項目(#2, #5等)が未実施のため、現時点で存在しない →
+  **[2026-07-29追記] 引き続き未解消。`EXP-002`の比較項目7・8として、Phase5-1版バックテスト実行時に
+  Expertsログの提供を要請中**
 
 ## 8. 未解決事項
 
