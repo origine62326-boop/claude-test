@@ -68,30 +68,36 @@ Dataset / Experiment登録
 - 完了条件: mainへのマージ方針（する/しない/条件付き）が人間により明示的に決定され、
   文書化されていること。本ロードマップ自体は、この決定が下るまでEA側のコード変更を伴わない
 
-### ステップ4: MT4バックテストの正式再現（残タスク、ユーザーからの実データ提供待ち）
+### ステップ4: MT4バックテストの正式再現（完了、2026-07-28）
 
-- これまで会話内でスクリーンショット(DS002)のみで確認していた観察値
-  (`UNVERIFIED_OBSERVATION`、`MODEL_REGISTRY.md` M001参照)を、実際の`.htm`レポートを用いて
-  `trading-system`パイプライン(`parse_mt4_report.py`等)で正式に再現する
-- 完了条件: 少なくとも1件の既存バックテストがパイプラインを通して再現され、数値が
-  `UNVERIFIED_OBSERVATION`から検証可能な状態になっていること（まだ正式なResearch Result化は
-  次のステップで行う）
+- ユーザーから実際の`.htm`レポート（RakutenSecurities-Demo, Build 1475）の提供を受け、
+  `trading-system`パイプライン(`parse_mt4_report.py`等)で正式に処理した
+- この過程でパイプライン側の実装バグ6件（文字コード、ラベル表記ゆれ、行修飾語の分離、
+  連勝/連敗の主値副値逆転、操作履歴のcolspan省略）を発見・修正した
+  （`research/versions/BACKTEST_REPRODUCIBILITY.md`, `trading-system/CHANGELOG.md` v0.2.1参照）
+- 完了条件: 達成。DS002由来の`UNVERIFIED_OBSERVATION`が、DS001としてパイプラインを通した
+  検証可能な数値になった（`currency`を除く全必須フィールド抽出成功、操作履歴184件中183件を
+  正しくペアリング）
 
-### ステップ5: Dataset / Experiment登録（一部着手済み）
+### ステップ5: Dataset / Experiment登録（完了、2026-07-28）
 
-- `research/experiments/EXP-001_ema_adx_trend_baseline.md`を作成済み。H001向けの実験を、
-  実データを見る前に事前登録した（baseline, データ分割方法, コスト前提の取得方針,
-  `configs/acceptance_criteria.yaml`を流用した採用/棄却条件）。status=`DRAFT`
-  （`HYPOTHESIS_REGISTRY.md` H001のrelated_experimentsにも反映済み）
-- 残タスク: ステップ4で再現したデータを`DATASET_REGISTRY.md`のDS001として正式登録する
-  （`status = ACTIVE`）。EXP-001はデータ受領後`READY`→`RUNNING`へ更新する
-- 完了条件: DS001が`status = ACTIVE`になり、EXP-001が実データで実行され、
-  UNVERIFIED_OBSERVATIONから正式なResearch Result（`RESEARCH_REPORT_TEMPLATE.md`形式）へ
-  昇格していること
+- `research/experiments/EXP-001_ema_adx_trend_baseline.md`を実データを見る前に事前登録
+  （baseline, データ分割方法, コスト前提の取得方針, `configs/acceptance_criteria.yaml`を
+  流用した採用/棄却条件）
+- `DATASET_REGISTRY.md`のDS001を`status = ACTIVE`として正式登録（checksum記録済み）
+- EXP-001を実データで実行し、`status = COMPLETED`, `decision = HOLD`（最低取引数200件に対し
+  184件で未達のため参考外。PF・期待値も未達）として記録
+- `HYPOTHESIS_REGISTRY.md` H001のstatusをHOLDへ更新、`MODEL_REGISTRY.md` M001の`metrics`を
+  UNVERIFIED_OBSERVATIONから実測値へ更新
+- 完了条件: 達成。ただしH001自体はサンプル不足のため未確定のまま（ADOPTED/REJECTEDではなくHOLD）。
+  さらなるデータでの追加検証はPhase R5以降の課題として残る
 
 ### Phase R1全体の完了条件
 
-上記5ステップすべてが完了していること。
+上記5ステップすべてが完了していること。2026-07-28時点の進捗: ステップ1・4・5は完了。
+ステップ2は台帳作成が完了し、`MODEL_REGISTRY.md`のcode_commit列への反映のみ残タスク。
+ステップ3（未マージPhase 5-1の扱い決定）は人間の意思決定待ちのまま未着手。
+Phase R1全体としては、ステップ3の決定が下るまで未完了とする。
 
 ## Phase R2: データ品質基盤
 

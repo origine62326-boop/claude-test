@@ -2,18 +2,23 @@
 
 優先度の高いものから並べています。
 
-## 最優先: 実データでのパーサー検証
+## [2026-07-28 完了] 実データでのパーサー検証(楽天MT4 Build 1475, 日本語UI)
 
-- [ ] `analysis/parse_mt4_report.py` を、実際に楽天MT4から出力したレポートHTMLで検証する
-      （v0.2.0で日英両対応・20項目の抽出に整理したが、実ファイルでの検証はまだ）
-- [ ] `analysis/parse_mt4_trades.py` を、実際に楽天MT4から出力した操作履歴HTMLで検証する
-- [ ] ラベル文言・列順が想定と違う場合、`FIELD_SEQUENCE` / `COLUMN_ORDER` を実データに合わせて調整する
-- [ ] 検証できたら `tests/fixtures/` のサンプルHTMLを実データベース（個人情報等を除いたもの）に
-      差し替え、テストの信頼性を上げる
+- [x] `analysis/parse_mt4_report.py` を、実際に楽天MT4(RakutenSecurities-Demo, Build 1475)から
+      出力したレポートHTMLで検証した。ラベル文言・行構造の想定違いが6件見つかり、修正した
+      （文字コード固定、「純益」表記、長音符欠落、勝敗内訳セルのラベル誤り、行修飾語の分離、
+      連勝/連敗セルの主値副値逆転。詳細は`research/versions/BACKTEST_REPRODUCIBILITY.md`参照）
+- [x] `analysis/parse_mt4_trades.py` を同ファイルで検証した。操作履歴の新規注文行が
+      `colspan`省略により列数不足で除外されるバグを修正した
+- [x] `FIELD_SEQUENCE` / `_merge_row_qualifiers` / `_row_cells`のcolspan展開を実データに合わせて調整済み
+- [x] `tests/fixtures/sample_report.htm` / `sample_report_en.htm`の連勝/連敗セルの値を、実データで
+      確認した仕様（主値/副値の並び）に合わせて修正した
 
-現状 `tests/fixtures/` のHTMLは、これまでの会話中にスクリーンショットで確認できた
-ラベル・数値と、MT4の標準的な英語表記から手作業で再現したものであり、実際のMT4出力
-そのものではありません。
+- [ ] **残タスク**: 上記はRakutenSecurities-Demo(Build 1475, 日本語UI)の1ファイルのみでの検証。
+      他のブローカー・MT4ビルド・英語UIでの実ファイル検証はまだ行っていない（英語ラベルは
+      引き続き推測ベース）。実際の英語版レポートが手に入った時点で改めて検証すること
+- [ ] レポート公式値とトレード明細再計算値の間に小さな乖離が残っている（原因未特定、
+      `research/data/DATASET_REGISTRY.md` DS001の`known_issues`参照）。調査は未着手
 
 ## 次に対応したいこと
 
@@ -40,6 +45,11 @@
       追えるようにする(現状は新規注文時点のSLしか見ていない)
 
 ## 直近の実データ分析（このパイプライン構築のきっかけになった結果）
+
+[2026-07-28] 上記2件とは別の期間（2025.07.21〜2026.07.27、USDJPY H1, 100000初期証拠金）の
+実バックテスト結果を1件、このパイプラインで正式に処理した（`research/data/DATASET_REGISTRY.md`
+DS001、`research/experiments/EXP-001_ema_adx_trend_baseline.md`参照。結果はHOLD、
+最低取引数200件に対し184件で不足）。下記2件はまだ実ファイルが手に入っておらず未処理のまま。
 
 会話内で確認済みの2回のバックテスト結果を、実ファイルが揃い次第このパイプラインで
 再現・比較すると良い:

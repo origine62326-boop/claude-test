@@ -21,7 +21,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import save_json, to_float  # noqa: E402
+from common import read_html_file, save_json, to_float  # noqa: E402
 
 COL_INDEX = "#"
 COL_TIME = "time"
@@ -61,7 +61,19 @@ def _find_trade_table(soup: BeautifulSoup):
 
 
 def _row_cells(tr) -> list[str]:
-    return [td.get_text(strip=True) for td in tr.find_all("td")]
+    """<td>のcolspanを展開してからテキストを取り出す。実MT4出力では、新規注文行の
+    損益・残高列が未確定のため、この2列が1つの<td colspan=2></td>にまとめられて
+    出力される場合がある(確認済み: RakutenSecurities-Demo, Build 1475)。colspanを
+    無視すると列数がCOLUMN_ORDERより1つ少なくなり、行ごと除外されてしまう。"""
+    cells = []
+    for td in tr.find_all("td"):
+        text = td.get_text(strip=True)
+        try:
+            colspan = int(td.get("colspan", 1))
+        except (TypeError, ValueError):
+            colspan = 1
+        cells.extend([text] * max(colspan, 1))
+    return cells
 
 
 def _parse_raw_rows(table) -> list[dict]:
@@ -134,7 +146,7 @@ def _pair_trades(raw_rows: list[dict]) -> list[dict]:
 
 def parse_trades_html(path) -> list[dict]:
     path = Path(path)
-    raw_html = path.read_text(encoding="utf-8", errors="ignore")
+    raw_html = read_html_file(path)
     soup = BeautifulSoup(raw_html, "html.parser")
 
     table = _find_trade_table(soup)

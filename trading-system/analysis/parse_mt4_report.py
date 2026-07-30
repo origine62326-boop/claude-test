@@ -6,10 +6,19 @@ MT4ストラテジーテスターの「結果」タブをHTML保存したファ�
 フィールドごとに日本語ラベルと英語ラベルの両方を候補として持たせている。
 
 注意（重要）:
-  このパーサーは実際にMT4から出力されたHTMLファイルでの検証がまだ済んでいない。
-  ラベル文言はこれまでの会話中でスクリーンショットから確認できた日本語表記と、
-  MT4の標準的な英語表記から推測したものであり、best-effortの実装である。
-  実ファイルで解析結果がおかしい場合は、該当ファイルを共有のうえパターンを調整すること。
+  2026-07-28、ユーザー提供の実MT4出力ファイル(RakutenSecurities-Demo, Build 1475,
+  日本語UI)で初めて検証した。この検証で、それまでスクリーンショットからの推測で
+  書かれていた複数の想定が誤っていたことが判明し、修正済み:
+    - 純利益のラベルは「純益」の場合がある(「純利益」だけでは一致しない)
+    - プロフィットファクターのラベルは末尾の長音符「ー」を欠く場合がある
+    - 勝敗内訳セルのラベルは「勝トレード」ではなく「勝率(%)」「負率(%)」
+    - 「最大」「平均」という行修飾語が、独立した<td>セルとして2組のラベル値ペア
+      両方にかかる形式で出現する場合がある(_merge_row_qualifiers参照)
+    - 連勝/連敗の「(金額)」セルと「(トレード数)」セルは、主値/副値の並びが
+      直感に反して逆になっている(前者=回数が主値、後者=金額が主値)
+  ただし検証したのは上記1ビルド・1言語のみであり、他のMT4ビルド・ブローカー・
+  英語UIでの実ファイル検証はまだ行っていない(英語ラベルは引き続き推測ベース)。
+  解析結果がおかしい場合は、該当ファイルを共有のうえパターンを調整すること。
   (TODO.md 参照)
 
 パース方針:
@@ -30,7 +39,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import save_json, to_float  # noqa: E402
+from common import read_html_file, save_json, to_float  # noqa: E402
 
 # ユーザーが明示的に要求した必須フィールド(このリストの充足状況をvalidate側で重視する)
 REQUIRED_FIELDS = [
@@ -51,10 +60,12 @@ FIELD_SEQUENCE = [
     ("modelling_quality_pct", [r"モデリング品質", r"Modelling quality"], "single"),
     ("mismatched_chart_errors", [r"不整合チャートエラー", r"Mismatched chart errors"], "single"),
     ("initial_deposit", [r"初期証拠金", r"Initial deposit"], "single"),
-    ("net_profit", [r"純利益", r"Total net profit", r"Net profit"], "single"),
+    ("net_profit", [r"純利益", r"純益", r"Total net profit", r"Net profit"], "single"),
     ("gross_profit", [r"総利益", r"Gross profit"], "single"),
     ("gross_loss", [r"総損失", r"Gross loss"], "single"),
-    ("profit_factor", [r"プロフィットファクター", r"Profit factor"], "single"),
+    # 末尾の長音符「ー」の有無で表記が割れる実例が確認されている(プロフィットファクター/
+    # プロフィットファクタ)。長音符を含めない形にしておけば、部分一致でどちらも拾える。
+    ("profit_factor", [r"プロフィットファクタ", r"Profit factor"], "single"),
     ("expected_payoff", [r"期待値", r"期待利得", r"Expected payoff"], "single"),
     ("_absolute_drawdown", [r"絶対ドローダウン", r"Absolute drawdown"], "single"),
     ("_max_drawdown_cell", [r"最大ドローダウン", r"Maximal drawdown"], "dual"),
@@ -62,8 +73,13 @@ FIELD_SEQUENCE = [
     ("total_trades", [r"総取引数", r"総取引回数", r"Total trades"], "single"),
     ("_short_positions_cell", [r"売りポジション", r"Short positions"], "dual"),
     ("_long_positions_cell", [r"買いポジション", r"Long positions"], "dual"),
-    ("_win_trades_cell", [r"勝トレード", r"Profit trades"], "dual"),
-    ("_loss_trades_cell", [r"敗トレード", r"負けトレード", r"Loss trades"], "dual"),
+    # 「勝トレード」は本来「最大の勝トレード/平均の勝トレード」(=largest/average win)の
+    # ラベルであり、総取引数直後の勝敗内訳セルは実際のMT4では「勝率(%)」/「負率(%)」と
+    # 表記される(実MT4出力で確認済み)。誤って前者に一致してしまわないよう、
+    # 「勝率」/「負率」を優先候補として先に置く(出現順探索のため、より早く出現する
+    # ラベルが先に一致する)。
+    ("_win_trades_cell", [r"勝率", r"勝トレード", r"Profit trades"], "dual"),
+    ("_loss_trades_cell", [r"負率", r"敗トレード", r"負けトレード", r"Loss trades"], "dual"),
     ("largest_win", [r"最大.{0,4}勝トレード", r"Largest profit trade"], "single"),
     ("largest_loss", [r"最大.{0,4}敗トレード", r"Largest loss trade"], "single"),
     ("average_win", [r"平均.{0,4}勝トレード", r"Average profit trade"], "single"),
@@ -86,6 +102,34 @@ def _flatten_cells(soup: BeautifulSoup) -> list[str]:
         if text:
             cells.append(text)
     return cells
+
+
+# 一部のMT4ビルド(実MT4出力で確認: RakutenSecurities-Demo, Build 1475)では、
+# 「最大」「平均」という行全体にかかる修飾語が、独立した<td>セル(colspanで先頭に1つ)として
+# 出現し、直後に並ぶ2組の(ラベル, 値)ペアの両方にかかる形式になっている。例:
+#   <td colspan=2>最大</td><td>勝トレード</td><td>680.07</td><td>敗トレード</td><td>-451.74</td>
+# これをフラット化すると ["最大","勝トレード","680.07","敗トレード","-451.74"] となり、
+# 「最大.{0,4}勝トレード」のような単一セル内一致を前提にした正規表現ではマッチしない。
+# そこで、修飾語セルを直後2組のラベルセルへ結合してから通常の探索処理に渡す。
+_ROW_QUALIFIERS = ("最大", "平均")
+
+
+def _merge_row_qualifiers(cells: list[str]) -> list[str]:
+    merged = []
+    i = 0
+    n = len(cells)
+    while i < n:
+        if cells[i] in _ROW_QUALIFIERS and i + 4 < n:
+            qualifier = cells[i]
+            merged.append(qualifier + cells[i + 1])
+            merged.append(cells[i + 2])
+            merged.append(qualifier + cells[i + 3])
+            merged.append(cells[i + 4])
+            i += 5
+        else:
+            merged.append(cells[i])
+            i += 1
+    return merged
 
 
 def _extract_single(text: str) -> float | None:
@@ -162,9 +206,9 @@ def _extract_header_metadata(raw_html: str, cells: list[str]) -> dict:
 
 def parse_report_html(path) -> dict:
     path = Path(path)
-    raw_html = path.read_text(encoding="utf-8", errors="ignore")
+    raw_html = read_html_file(path)
     soup = BeautifulSoup(raw_html, "html.parser")
-    cells = _flatten_cells(soup)
+    cells = _merge_row_qualifiers(_flatten_cells(soup))
 
     result: dict = {"source_file": str(path)}
     result.update(_extract_header_metadata(raw_html, cells))
@@ -203,17 +247,29 @@ def parse_report_html(path) -> dict:
     result["short_trades"], result["short_win_rate_pct"] = raw_values["_short_positions_cell"]
     result["long_trades"], result["long_win_rate_pct"] = raw_values["_long_positions_cell"]
 
-    # 連勝/連敗は「トレード数」セルの主値(=回数)を正とし、「金額」セルの主値(=金額)を
-    # 補助情報として添える。どちらか一方しか無いレポートでも取れた方を使う。
-    wins_count, _ = raw_values["_max_consecutive_wins_count_cell"]
-    wins_amount, wins_count_fallback = raw_values["_max_consecutive_wins_amount_cell"]
-    result["max_consecutive_wins"] = wins_count if wins_count is not None else wins_count_fallback
-    result["max_consecutive_wins_amount"] = wins_amount
+    # 連勝/連敗の「金額」セルと「トレード数」セルは、直感に反して主値/副値の並びが
+    # 逆になっている(実MT4出力で確認済み: RakutenSecurities-Demo, Build 1475)。
+    #   「(金額)」セル   = "回数 (金額)"  → 主値=回数, 副値=金額
+    #   「(トレード数)」セル = "金額 (回数)"  → 主値=金額, 副値=回数
+    # ラベル名と主値の対応が逆転しているため、それぞれのセルから正しい方(回数側・金額側)を
+    # 取り出して合成する。どちらか一方しか無いレポートでも取れた方を使う。
+    wins_count_from_amount_cell, wins_amount_from_amount_cell = raw_values["_max_consecutive_wins_amount_cell"]
+    wins_amount_from_count_cell, wins_count_from_count_cell = raw_values["_max_consecutive_wins_count_cell"]
+    result["max_consecutive_wins"] = (
+        wins_count_from_amount_cell if wins_count_from_amount_cell is not None else wins_count_from_count_cell
+    )
+    result["max_consecutive_wins_amount"] = (
+        wins_amount_from_amount_cell if wins_amount_from_amount_cell is not None else wins_amount_from_count_cell
+    )
 
-    losses_count, _ = raw_values["_max_consecutive_losses_count_cell"]
-    losses_amount, losses_count_fallback = raw_values["_max_consecutive_losses_amount_cell"]
-    result["max_consecutive_losses"] = losses_count if losses_count is not None else losses_count_fallback
-    result["max_consecutive_losses_amount"] = losses_amount
+    losses_count_from_amount_cell, losses_amount_from_amount_cell = raw_values["_max_consecutive_losses_amount_cell"]
+    losses_amount_from_count_cell, losses_count_from_count_cell = raw_values["_max_consecutive_losses_count_cell"]
+    result["max_consecutive_losses"] = (
+        losses_count_from_amount_cell if losses_count_from_amount_cell is not None else losses_count_from_count_cell
+    )
+    result["max_consecutive_losses_amount"] = (
+        losses_amount_from_amount_cell if losses_amount_from_amount_cell is not None else losses_amount_from_count_cell
+    )
 
     # おまけ情報(要求リストには無いが、抽出コストがほぼゼロで診断に有用なもの)
     result["bars_in_test"] = raw_values["bars_in_test"]

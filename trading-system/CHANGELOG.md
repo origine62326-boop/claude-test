@@ -21,6 +21,47 @@ Releaseが自動作成されるようになった。`releases/<tag>/NOTES.md` �
 本文に、無ければGitHub自動生成ノートを使う。EA・分析パイプラインの動作には
 影響しないため、製品バージョン番号は進めていない。
 
+## v0.2.1 (実データ検証によるパーサーバグ修正)
+
+初めて実際のMT4出力ファイル（RakutenSecurities-Demo, Build 1475, 日本語UI）を
+`analysis/parse_mt4_report.py` / `analysis/parse_mt4_trades.py` に通したところ、必須フィールドが
+ほぼ全て抽出できなかった。原因調査の結果、v0.2.0時点の実装がスクリーンショットからの推測に
+基づいており、実際のMT4出力と6点で食い違っていたことが判明し、修正した。
+
+### 変更点
+
+- `analysis/common.py`: `read_html_file()`を新設。UTF-8で厳密デコードを試み、失敗時のみ
+  cp932(Shift-JIS)にフォールバックする方式に変更（従来は`utf-8, errors="ignore"`固定で、
+  日本語UIのMT4が出力するcp932ファイルの日本語ラベルが読めなくなっていた）
+- `analysis/parse_mt4_report.py`:
+  - 純利益のラベルに「純益」を追加（実データでは「純利益」ではなく「純益」表記だった）
+  - プロフィットファクターのラベルから末尾の長音符「ー」を除去（実データは「プロフィットファクタ」）
+  - 勝敗内訳セルのラベルを「勝トレード」「敗トレード」から「勝率」「負率」に修正
+    （「勝トレード」は実際には最大/平均の勝トレード金額のラベルだった）
+  - `_merge_row_qualifiers()`を新設。「最大」「平均」が独立した`<td>`セル(colspan)として
+    行全体にかかる形式に対応
+  - 連勝/連敗の「(金額)」セルと「(トレード数)」セルで、主値/副値の並びが直感に反して
+    逆になっている実仕様に合わせて構成ロジックを修正
+- `analysis/parse_mt4_trades.py`: `_row_cells()`で`<td>`のcolspanを展開するよう修正
+  （新規注文行は損益・残高列が`<td colspan=2></td>`と1セルにまとめられて出力されるため、
+  従来のコードでは列数不足で新規注文行ごと除外され、open/closeのペアリングが機能していなかった）
+- `tests/fixtures/sample_report.htm` / `sample_report_en.htm`: 連勝/連敗セルの値を、実データで
+  確認した仕様に合わせて修正（出力される最終的な指標値は変更なし、内部のセル配置のみ修正）
+
+### 検証
+
+- pytest 36件全て通過（修正前後で変化なし）
+- 実データ(DS001、`research/data/DATASET_REGISTRY.md`参照)で、`currency`を除く全必須フィールドの
+  抽出に成功。操作履歴も184件中183件を正しくopen/closeペアリング（残り1件はテスト終了時未決済、
+  正しく「未決済」として記録）
+- 詳細は`research/versions/BACKTEST_REPRODUCIBILITY.md`、`research/experiments/EXP-001_ema_adx_trend_baseline.md`参照
+
+### 既知の制約（引き続き未解消）
+
+- 検証したのはRakutenSecurities-Demo, Build 1475, 日本語UIの1ファイルのみ。他ブローカー・
+  MT4ビルド・英語UIでの実ファイル検証はまだ行っていない
+- レポート公式値とトレード明細再計算値の間に小さな乖離が残っている（原因未特定）
+
 ## v0.2.0 (最小構成の解析パイプライン完成)
 
 EA (`mt4/USDJPY_LowRisk_Trend_EA.mq4`) には変更なし。分析パイプラインのみを対象とした

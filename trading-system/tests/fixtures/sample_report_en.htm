@@ -1,3 +1,8 @@
+<!-- 2026-07-28: swapped the primary/secondary value order for the "consecutive wins ($)" /
+     "consecutive wins (count)" cells to match verified real MT4 output (RakutenSecurities-Demo,
+     Build 1475, Japanese-locale report cross-checked against MT4's documented field semantics).
+     The "($)" cell's primary value is the streak COUNT (amount in parens); the "(count)" cell's
+     primary value is the streak AMOUNT (count in parens) - counter-intuitive but confirmed. -->
 <html>
 <head><meta charset="utf-8"></head>
 <body>
@@ -46,12 +51,12 @@
   <td>Average loss trade</td><td>-47.26</td>
 </tr>
 <tr>
-  <td>Maximum consecutive wins ($)</td><td>297.58 (3)</td>
-  <td>Maximum consecutive losses ($)</td><td>-401.99 (8)</td>
+  <td>Maximum consecutive wins ($)</td><td>3 (297.58)</td>
+  <td>Maximum consecutive losses ($)</td><td>8 (-401.99)</td>
 </tr>
 <tr>
-  <td>Maximal consecutive wins (count)</td><td>3 (297.58)</td>
-  <td>Maximal consecutive losses (count)</td><td>8 (-401.99)</td>
+  <td>Maximal consecutive wins (count)</td><td>297.58 (3)</td>
+  <td>Maximal consecutive losses (count)</td><td>-401.99 (8)</td>
 </tr>
 <tr>
   <td>Average consecutive wins</td><td>1</td>
