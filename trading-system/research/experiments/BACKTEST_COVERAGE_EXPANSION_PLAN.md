@@ -72,7 +72,7 @@
 - `MaxDailyLossPercent=0.3`・`MaxConsecutiveLosses=20`で2026-07-31実行完了（`EXP-003_daily_loss_limit_function_test.md`、DS005、status=`COMPLETED`）。合格条件1〜8すべてYES、日次損失上限機能=VERIFIED
 - 検証軸: E（リスク管理、日次損失制限単体の機能確認）
 
-### 優先2: Phase1-4 BaselineとPhase5-1の完全同一条件再実行比較
+### 優先2: Phase1-4 BaselineとPhase5-1の完全同一条件再実行比較（事前登録済み、2026-07-31ユーザー承認）
 
 - 目的: `EXP-001`（現行Baseline）は使用EAビルド（CC001かCC002か）が未確認という限界を持つため
   （`EXP-001`の`limitations`参照）、`EXP-002`との厳密なA/B比較になっていない。CC001（main, Phase1-4）を
@@ -83,6 +83,10 @@
 - 変更点: 使用EAビルドのみ（CC001↔CC002）、他は`EXP-002`と同一に固定
 - 前提: ユーザーがMT4で`main`版EA（CC001, `72ac293f71131d53cd027a2786fbfaa2b3bed19d`）をコンパイル・
   実行する必要がある
+- **`EXP-004_cc001_baseline_matched_rerun.md`として事前登録済み（status=READY、MT4実行待ち）**。
+  実装コードを確認したところ、CC001にも`MaxDailyLossPercent`/`MaxConsecutiveLosses`入力自体は
+  存在するが、エントリー判定には未接続（妥当性検証のみ）であることを確認した（`EXP-004`「CC001固有の
+  注意点」参照）
 
 ### 優先3: Buy only / Sell onlyの方向別検証
 
@@ -125,7 +129,7 @@
 | B. 相場環境 | なし | 上昇/下落/レンジ、高低ボラティリティ | ADX/ATRベースの相場環境分類（Observation）が未整備。実験登録前に整備が必要 |
 | C. 売買方向 | Buy&Sell同時（`EXP-001`, `EXP-002`の集計を事後的にBuy/Sell別集計したもの、`direction_analysis.py`使用） | `EnableShort=false`/`EnableLong=false`による独立実行 | 優先3。既存の「集計を分けただけ」は独立実験としては数えない |
 | D. コスト感応度 | スプレッド5のみ | スプレッド拡大条件、スリッページ感応度 | 優先5 |
-| E. リスク管理 | Phase5-1既定値（`EXP-002`、ただし使用ビルド未確定の限界あり）、日次損失制限単体の機能確認（`EXP-003`、非標準パラメータ、完了） | Phase1-4 Baseline確定版、連敗制限のみ | 優先2（Baseline確定） |
+| E. リスク管理 | Phase5-1既定値（`EXP-002`、ただし使用ビルド未確定の限界あり）、日次損失制限単体の機能確認（`EXP-003`、非標準パラメータ、完了） | Phase1-4 Baseline確定版（`EXP-004`、事前登録済み・実行待ち）、連敗制限のみ | 優先2（`EXP-004`実行待ち） |
 
 ## 今後の運用
 
