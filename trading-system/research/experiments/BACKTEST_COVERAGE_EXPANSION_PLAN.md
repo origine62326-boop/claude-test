@@ -67,10 +67,9 @@
 
 ## 候補一覧（未発行、優先順位付き）
 
-### 優先1: EXP-003 日次損失上限の発動機能試験
+### 優先1: EXP-003 日次損失上限の発動機能試験（完了）
 
-- `MaxDailyLossPercent=0.3`・`MaxConsecutiveLosses=20`で2026-07-31にユーザー承認済み
-  （`EXP-003_daily_loss_limit_function_test.md`、status=`READY`）。MT4実行待ち
+- `MaxDailyLossPercent=0.3`・`MaxConsecutiveLosses=20`で2026-07-31実行完了（`EXP-003_daily_loss_limit_function_test.md`、DS005、status=`COMPLETED`）。合格条件1〜8すべてYES、日次損失上限機能=VERIFIED
 - 検証軸: E（リスク管理、日次損失制限単体の機能確認）
 
 ### 優先2: Phase1-4 BaselineとPhase5-1の完全同一条件再実行比較
@@ -126,7 +125,7 @@
 | B. 相場環境 | なし | 上昇/下落/レンジ、高低ボラティリティ | ADX/ATRベースの相場環境分類（Observation）が未整備。実験登録前に整備が必要 |
 | C. 売買方向 | Buy&Sell同時（`EXP-001`, `EXP-002`の集計を事後的にBuy/Sell別集計したもの、`direction_analysis.py`使用） | `EnableShort=false`/`EnableLong=false`による独立実行 | 優先3。既存の「集計を分けただけ」は独立実験としては数えない |
 | D. コスト感応度 | スプレッド5のみ | スプレッド拡大条件、スリッページ感応度 | 優先5 |
-| E. リスク管理 | Phase5-1既定値（`EXP-002`、ただし使用ビルド未確定の限界あり） | Phase1-4 Baseline確定版、連敗制限のみ、日次損失制限のみ | 優先1（日次損失制限単体は`EXP-003`）・優先2（Baseline確定） |
+| E. リスク管理 | Phase5-1既定値（`EXP-002`、ただし使用ビルド未確定の限界あり）、日次損失制限単体の機能確認（`EXP-003`、非標準パラメータ、完了） | Phase1-4 Baseline確定版、連敗制限のみ | 優先2（Baseline確定） |
 
 ## 今後の運用
 
