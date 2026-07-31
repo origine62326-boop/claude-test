@@ -19,11 +19,17 @@
   `limitations`参照）。この不確実性を許容した上でBaselineとして採用する、というのが
   2026-07-29時点のユーザー判断。
 
-- [x] **Backtest Run B**（2026-07-29更新）
-  現状: **実行完了**（`EXP-002_phase5_1_risk_management.md`, DS004）。ただしExpertsログが
-  提供されていないため、H002が本来検証したい「制限が実際に発動したか」は未確認のまま。
+- [x] **Backtest Run B**（2026-07-31更新）
+  現状: **実行完了・Expertsログ解析済み**（`EXP-002_phase5_1_risk_management.md`, DS004）。
   数値指標（純損益・PF・最大DD）はRun A(EXP-001)と同等〜わずかに改善、最大連敗は変化なし、
-  取引数は+12件増加という結果。EXP-002自体の判定は`HOLD`（Expertsログ待ち）。
+  取引数は+12件増加という結果（要因未特定）。**[2026-07-31追加]** Expertsログ解析の結果、
+  連敗制限(`MaxConsecutiveLosses=3`)は2回発動（2026-05-14 17:00, 2026-06-17 19:00）し、
+  いずれも翌サーバー日付で正常に再開、停止中の新規注文は0件と確認された（連敗制限機能=
+  **VERIFIED**）。一方、日次損失上限(`MaxDailyLossPercent=2`)は本バックテスト期間中一度も
+  発動しておらず、機能自体の実動作は**NOT_TRIGGERED**（未検証）のまま。EXP-002自体の判定は
+  引き続き`HOLD`（連敗制限は検証できたが、H002が対象とするもう一方の機能が未検証のため）。
+  完全なADOPTED判定は、日次損失上限を意図的に発動させる専用試験
+  （`EXP-003_daily_loss_limit_function_test`、事前登録案作成済み・パラメータ承認待ち）実施後に行う。
   なお初回の試行はMT4のスプレッド設定がRun Aと異なっており（4.1pips、`MaxSpreadPips=3`を
   常時超過）取引数0件になったため不採用とし、設定修正後の再実行分を正式なRun Bとして採用した。
 
@@ -66,20 +72,24 @@
 `research/data/DATASET_REGISTRY.md`に記録し、`UNVERIFIED_OBSERVATION`ではなく正式なResearch Result
 として扱った（`RESEARCH_RULES.md`第0節参照）。Run A・Run Bともにこの基準を満たしている。
 
-## 全体状況（2026-07-29更新）
+## 全体状況（2026-07-31更新）
 
 | 項目 | 状態 |
 |---|---|
 | コンパイル成功 | 未達 |
 | Backtest Run A | **達成**（EXP-001をBaselineとして固定） |
-| Backtest Run B | **達成**（EXP-002実行完了、DS004。ただしEXP-002自体の判定はHOLD） |
+| Backtest Run B | **達成**（EXP-002実行完了、DS004、Expertsログ解析済み。連敗制限機能=VERIFIED、日次損失上限機能=NOT_TRIGGERED。EXP-002自体の判定はHOLD） |
 | HTMLレポート保存 | **達成**（Run A・Run Bとも） |
 | Parameter保存 | **達成**（Run B分は実測値、Run A分は既定値想定のまま） |
 | Commit SHA保存 | **達成** |
-| 実験登録済み | **達成**（EXP-001, EXP-002とも登録済み） |
+| 実験登録済み | **達成**（EXP-001, EXP-002とも登録済み。EXP-003は事前登録案作成済み・パラメータ承認待ち） |
 | リスク確認 | 部分的（事実整理は完了、人間の承認は未実施） |
 
 8項目中6項目が達成。残りはコンパイル確認（ユーザー環境のMetaEditor）と、リスク確認の人間による
-承認のみ。**ただしEXP-002自体はExpertsログ未提供のためHOLD判定であり、「Backtest Run B達成」は
-あくまで「実行してデータを取得した」という意味であって、「Phase5-1の効果が実証された」という
-意味ではない点に注意。** マージ判断における未解決点は`PHASE5_1_DECISION_REPORT.md`の更新版を参照。
+承認のみ。**[2026-07-31更新]** EXP-002のExpertsログ解析により、連敗制限(`MaxConsecutiveLosses`)は
+実際に2回発動し正常に再開することを確認した（VERIFIED）。ただし日次損失上限(`MaxDailyLossPercent`)は
+本バックテスト期間中一度も発動しておらず、実動作は未検証のまま（NOT_TRIGGERED）。よって「Backtest
+Run B達成」は「連敗制限の実動作を確認できた」ことまでを意味し、「Phase5-1の2機能双方の効果が
+実証された」という意味ではない点に引き続き注意。日次損失上限の実動作確認は
+`EXP-003_daily_loss_limit_function_test`（事前登録案作成済み、`MaxDailyLossPercent`候補値は
+ユーザー承認待ち）で行う予定。マージ判断における未解決点は`PHASE5_1_DECISION_REPORT.md`の更新版を参照。
