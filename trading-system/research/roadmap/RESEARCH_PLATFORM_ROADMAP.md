@@ -163,6 +163,34 @@ DS001自体の登録はPhase R1ステップ5で完了させるため、R2では�
 `RESEARCH_CHARTER.md`の禁止事項（実口座発注の自動許可なし、`AllowLiveTrading`の既定false等）は
 本ロードマップ全体を通じて維持する。
 
+## Fact/Observation/Hypothesis 3層基盤ロールアウト（別採番体系、2026-07-31追加）
+
+2026-07-31、ユーザーの最終目標（過去20年の経済ニュースとFX変動を、取得可能・検証可能な範囲で網羅的に
+分析すること）に向けて、Fact→Observation→Hypothesisの3層構造の導入が決定した
+（`RESEARCH_CHARTER.md`改訂2参照）。ユーザー指示による4段階の展開計画を、既存のPhase R0-R9・EA側の
+Phase 1-9とは**別の採番体系**として「Phase 1〜4」（本節限定の呼称。研究基盤ロードマップの
+`Phase R1`等と混同しないこと）で記録する。
+
+- **Phase 1（完了、2026-07-31）**: `research/governance/`配下にスキーマ・ポリシーの骨格を作成。
+  `FACT_SCHEMA.md`, `OBSERVATION_SCHEMA.md`, `HYPOTHESIS_POLICY.md`, `MULTIPLE_TESTING_POLICY.md`,
+  `PROMOTION_POLICY.md`の5文書。実データ登録は行わず、スキーマ・運用ルールの定義のみ。
+- **Phase 2（完了、2026-07-31）**: 実際に取得可能なデータソースの調査。
+  `research/governance/DATA_SOURCE_REGISTRY.md`を作成し、本セッションから実際に到達性を確認した
+  結果（HTTPステータス・実データ取得可否）を記録した。認証不要で確認できたのはECB Data Portal・
+  米国BLS API・CFTC COTレポート(Socrata API)・BIS Data Portal・財務省為替介入実績ページ。
+  無料登録が必要と判明したのはFRED・e-Stat・BOJ統計検索（URL要追加調査）。アクセス不可・規約上
+  不適切と判明したのはForexFactory・Investing.com経済指標カレンダー（いずれもHTTP 403）、
+  OANDA Order Book/Position Ratios（口座+APIトークン必須、過去に「公開されている」と述べたのは
+  誤りだったため訂正済み）。
+- **Phase 3（凍結中、着手条件: Phase 2の結果を踏まえた追加調査完了後）**: 分足価格データ＋
+  経済指標イベント（タイムスタンプ付き、予想値・結果値・改定値を含む）を結合する20年規模の
+  データ基盤設計。最低限のフィールド: 通貨ペア, タイムスタンプ, OHLC, スプレッド,
+  ニュースまたはイベントID, 発表時刻, 予想値, 結果値, 前回値, 改定値, 情報源, タイムゾーン, 取得時刻。
+  Phase 2の調査結果、特に「予想値付きの経済指標カレンダーを機械的に取得できる無料ソースが
+  未確認」という課題への対応方針が定まるまで着手しない。
+- **Phase 4（凍結中）**: Fact/Observation層に基づくHypothesisの本格登録・検証開始。
+  `HYPOTHESIS_POLICY.md`の凍結規定により、Phase 2・Phase 3のデータ品質確認が完了するまで着手しない。
+
 ## 既存のEA開発（Phase1-9, `USDJPY_LowRisk_Trend_EA.mq4`）との関係
 
 既存EAのPhase番号（Phase1-9、`trading-system/mt4/`側の開発）と、本ロードマップのPhase R0-R9は

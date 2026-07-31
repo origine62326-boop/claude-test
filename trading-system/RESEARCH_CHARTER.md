@@ -616,3 +616,25 @@ FX市場を研究するための研究プラットフォームである。
   直前まで「全文をそのまま保存する」方針で保持していたが、本改訂により実際のID体系との矛盾を解消した。
 - **承認**: ユーザーによるPR #8の条件付き承認（本改訂を含む修正を条件とする）。
 - 詳細は`research/audits/GAP_ANALYSIS.md`のP0項目2（解消済みとして記録）を参照。
+
+### 2026-07-31 改訂2（Fact/Observation/Hypothesis 3層構造の採用）
+
+- **変更理由**: ユーザーの最終目標（過去20年の経済ニュースとFX変動を、取得可能・検証可能な範囲で
+  最大限網羅的に分析すること）に向けて、ユーザーが「プロっぽい分析AI」ではなく「嘘をつかない研究
+  システム」の方向性を維持するため、Fact（生データ）→Observation（決定的な計算のみによる導出）→
+  Hypothesis（検証対象の仮説、第5節と同じ）という3層構造を正式採用した。
+- **差分**: 第7節Layer 1 (Data Acquisition) / Layer 2 (Data Quality) を運用レベルで具体化するものとして、
+  `research/governance/FACT_SCHEMA.md`・`research/governance/OBSERVATION_SCHEMA.md`を新設。
+  Hypothesis層の多重検定・登録上限リスクに対応するため`research/governance/HYPOTHESIS_POLICY.md`・
+  `research/governance/MULTIPLE_TESTING_POLICY.md`を新設。Fact→Observation→Hypothesis→Evidenceの
+  昇格経路を明文化する`research/governance/PROMOTION_POLICY.md`を新設。いずれも第5節「Evidenceと
+  Hypothesisを混同しない」「実験結果が良好だったことをもってEvidenceレベルを自動的に引き上げない」
+  という既存原則と矛盾しないよう設計した。
+  第19節「追加できるのは以下のみ」のリストに、`research/governance/RESEARCH_RULES.md`第11節を通じて
+  Fact・Observationを追加した（新しい売買ルールやスコアリング重みそのものではないため）。
+- **運用上の制約**: 上記5文書はスキーマ・ルールの骨格のみであり、実際のFact/Observation登録および
+  Fact/Observationに基づく新規Hypothesisの検証開始は、データソースの取得可否確認（Phase 2、
+  `research/governance/DATA_SOURCE_REGISTRY.md`）と分足+経済指標データ基盤の設計（Phase 3）が完了する
+  まで凍結する（`HYPOTHESIS_POLICY.md`参照）。既存のH001〜H003・EXP-001・EXP-002はこの改訂の影響を
+  受けない。
+- **承認**: ユーザー指示（2026-07-31会話）。

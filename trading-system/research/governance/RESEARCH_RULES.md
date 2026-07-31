@@ -84,10 +84,16 @@ Claude Codeおよび開発者は、次のもの以外を「勝てそうだから
 - Data Quality Rule
 - Reproducibility Rule
 - Risk Constraint
+- Fact（`governance/FACT_SCHEMA.md`準拠。出典・取得時刻・計算方法を伴わないものは不可）
+- Observation（`governance/OBSERVATION_SCHEMA.md`準拠。決定的な計算のみ、方向性の解釈を含まないもの）
 - 実装上必要な技術要件（バグ修正、依存関係更新等）
 
 新しい特徴量・売買ルール・スコアリング重みを追加する場合は、必ず対応するHypothesis
 （またはEvidence）を先に登録し、実装はその後に行う。
+
+**[2026-07-31追加]** Fact/Observationは、それ自体が新しい売買ルールやスコアリング重みではないため
+本ルールの対象に追加したが、`governance/HYPOTHESIS_POLICY.md`の凍結規定により、これらから新規
+Hypothesisを登録・検証すること自体は現在凍結中（Phase 2/3のデータ基盤確定まで）。
 
 ## 12. 台帳ファイルの形式チェック（提案、未実装）
 
