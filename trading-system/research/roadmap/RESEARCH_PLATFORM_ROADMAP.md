@@ -84,8 +84,8 @@ Dataset / Experiment登録
   総取引数(196件)とログ側のopen件数(196件)が一致することを確認した上で、連敗制限の発動2回・
   正常な再開・停止中の新規注文ゼロを確認した（`EXP-002`, `BACKTEST_REPRODUCIBILITY.md` BR004参照）。
   日次損失上限は本データの期間中に発動しておらず、この機能単体の再現確認は別途
-  `EXP-003_daily_loss_limit_function_test`（`research/experiments/`に事前登録案を作成済み、
-  パラメータはユーザー承認待ち）で行う
+  `EXP-003_daily_loss_limit_function_test`（`MaxDailyLossPercent=0.3`/`MaxConsecutiveLosses=20`で
+  2026-07-31にユーザー承認済み、status=`READY`、MT4実行待ち）で行う
 
 ### ステップ5: Dataset / Experiment登録（完了、2026-07-28）
 

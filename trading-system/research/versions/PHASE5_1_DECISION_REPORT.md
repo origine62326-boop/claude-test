@@ -74,7 +74,15 @@ trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4 | 413 ++++++++++++++++++++++++-
 
 ## 5. コンパイル状態
 
-`PENDING_USER_METAEDITOR_CONFIRMATION`
+~~`PENDING_USER_METAEDITOR_CONFIRMATION`~~
+
+**[2026-07-31訂正] `COMPILE_CONFIRMED_BY_USER_SCREENSHOT`**: ユーザーが`EXP-003`承認時に、MetaEditorで
+0 errors/0 warningsをスクリーンショットで確認済みと報告した。**注記**: 機械可読なコンパイルログ
+（CIビルド、テキストログ等）は本リポジトリに未登録であり、この確認はユーザー自身の目視確認
+（スクリーンショット）に基づく自己申告である。比較対象として、main側のv0.1.0(Phase1-4)は
+`releases/v0.1.0/NOTES.md`に明記の記載（後述）とは確認の性質がやや異なる点に留意。
+
+以下、本節作成時点（2026-07-28）の原文を訂正前の記録として残す。
 
 - 当該ブランチの`trading-system/CHANGELOG.md`には「ブランチ`claude/ea-v0.3.0-risk-management`。
   **コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。**」と明記
@@ -82,7 +90,8 @@ trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4 | 413 ++++++++++++++++++++++++-
   (このセッションではMQL4コンパイラを実行できないため、手動コードレビューのみ実施)」
 - 比較対象として、main側のv0.1.0(Phase1-4)は`releases/v0.1.0/NOTES.md`に
   「ユーザー環境のMetaEditorでコンパイル確認済み: 0 errors, 0 warnings」と明記されており、
-  こちらは確認済み。Phase 5-1はこれと同水準の確認が**まだ行われていない**
+  こちらは確認済み。~~Phase 5-1はこれと同水準の確認が**まだ行われていない**~~
+  **[2026-07-31訂正] Phase 5-1も同水準（ユーザーによるMetaEditor目視確認）の確認が得られた**
 
 ## 6. テスト状態
 
@@ -127,8 +136,9 @@ trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4 | 413 ++++++++++++++++++++++++-
   一方、日次損失上限(`MaxDailyLossPercent=2`)は本バックテスト期間中一度も到達しておらず、
   TEST_PLAN_PHASE5-1.mdの#2・#3・#8・#9（日次損失上限の到達・超過・ラッチの日付変更後解除・
   回復しても当日中は解除されないこと）はいずれも依然として未確認のまま。この機能単体の実動作確認を
-  目的として`EXP-003_daily_loss_limit_function_test`を事前登録した（`MaxDailyLossPercent`の
-  具体的な検証用パラメータはユーザー承認待ち）**
+  目的として`EXP-003_daily_loss_limit_function_test`を事前登録した。**[2026-07-31追記]**
+  `MaxDailyLossPercent=0.3`・`MaxConsecutiveLosses=20`でユーザー承認済み、status=`READY`、
+  MT4実行待ち**
 
 ## 8. 未解決事項
 
@@ -144,8 +154,9 @@ TEST_PLAN_PHASE5-1.mdの未実施15項目のうち、特に判断材料として
 - **#17, #18(GlobalVariableの残存・キー衝突)**: 複数回のテスト実行や複数口座・複数Symbol運用時に
   意図しない状態干渉が起きないかが未確認
 - **#20(不正パラメータ時にOnInitが失敗しEAが起動しないこと)**: 誤設定時の安全側動作が未確認
-- 上記に加え、そもそも「MetaEditorでのコンパイル確認(0 errors/0 warnings)」自体が未実施
-  （本レポート第5節）
+- ~~上記に加え、そもそも「MetaEditorでのコンパイル確認(0 errors/0 warnings)」自体が未実施~~
+  **[2026-07-31解消]** ユーザーがMetaEditorで0 errors/0 warningsをスクリーンショットで確認済みと
+  報告（本レポート第5節）。ただし機械可読なコンパイルログは未登録のまま
 
 ## 9. リスク
 
@@ -171,8 +182,12 @@ TEST_PLAN_PHASE5-1.mdの未実施15項目のうち、特に判断材料として
 基準（TEST_PLAN_PHASE5-1.md、CHANGELOG.mdの記載）に対して、現状どこが未達かの整理**である。
 
 - `trading-system/CHANGELOG.md`(当該ブランチ)は、Phase 5-1を「未タグ・未リリース」と自己申告して
-  おり、その理由として「コンパイル確認・バックテスト検証待ち」を挙げている。この2条件は
-  本レポート作成時点でも未充足のままである（第5-7節）
+  おり、その理由として「コンパイル確認・バックテスト検証待ち」を挙げている。~~この2条件は
+  本レポート作成時点でも未充足のままである（第5-7節）~~ **[2026-07-31訂正]** バックテスト検証は
+  `EXP-002`で実施済み（連敗制限機能=VERIFIED、日次損失上限機能=NOT_TRIGGERED、第7節参照）。
+  コンパイル確認はユーザーのMetaEditorスクリーンショット確認により達成（第5節）。ただし
+  当該ブランチの`CHANGELOG.md`自体（未タグ・未リリースの自己申告テキスト）はまだ更新されていない
+  （本レポートの訂正はEA側のコード・ドキュメントを変更するものではなく、研究基盤側の記録の訂正）
 - `TEST_PLAN_PHASE5-1.md`は「実施後の報告項目」として、コンパイル結果・チェックリスト結果・
   v0.2.0との比較バックテスト結果を`releases/v0.3.0/`へ記録することを求めているが、
   `trading-system/releases/`配下にv0.3.0のディレクトリはまだ存在しない

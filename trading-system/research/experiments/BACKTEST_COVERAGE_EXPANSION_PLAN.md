@@ -69,8 +69,8 @@
 
 ### 優先1: EXP-003 日次損失上限の発動機能試験
 
-- 事前登録案作成済み（`EXP-003_daily_loss_limit_function_test.md`）。`MaxDailyLossPercent`候補値は
-  ユーザー承認待ち
+- `MaxDailyLossPercent=0.3`・`MaxConsecutiveLosses=20`で2026-07-31にユーザー承認済み
+  （`EXP-003_daily_loss_limit_function_test.md`、status=`READY`）。MT4実行待ち
 - 検証軸: E（リスク管理、日次損失制限単体の機能確認）
 
 ### 優先2: Phase1-4 BaselineとPhase5-1の完全同一条件再実行比較

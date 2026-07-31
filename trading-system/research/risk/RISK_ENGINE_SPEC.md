@@ -29,7 +29,7 @@
 |---|---|
 | source_branch | `claude/ea-v0.3.0-risk-management` |
 | merge_status | `NOT_MERGED_TO_MAIN` |
-| compile_status | `PENDING_USER_METAEDITOR_CONFIRMATION`（当該ブランチの`trading-system/CHANGELOG.md`に「コンパイル確認・バックテスト検証待ちのため未タグ・未リリース」「コンパイル確認はユーザー環境のMetaEditorで実施が必要（このセッションではMQL4コンパイラを実行できないため、手動コードレビューのみ実施）」と明記されている。0 errors/0 warningsの確認は**まだ得られていない**） |
+| compile_status | `COMPILE_CONFIRMED_BY_USER_SCREENSHOT`（**[2026-07-31訂正]** ユーザーがMetaEditorで0 errors/0 warningsをスクリーンショットで確認済みと報告（`EXP-003`承認時）。旧値`PENDING_USER_METAEDITOR_CONFIRMATION`は解消。**注記**: 機械可読なコンパイルログ（CIビルド、テキストログファイル等）は本リポジトリに未登録であり、この確認はユーザー自身の目視確認（スクリーンショット）に基づく自己申告である） |
 | backtest_status | `PARTIALLY_COMPLETE`（**[2026-07-31更新]** `EXP-002_phase5_1_risk_management.md`(DS004)でパイプライン検証済み。Expertsログ解析の結果、連敗制限(`MaxConsecutiveLosses`)は**VERIFIED**（2026-05-14 17:00, 2026-06-17 19:00の2回発動、いずれも翌日正常再開、停止中の新規注文0件を確認）。日次損失上限(`MaxDailyLossPercent`)は本バックテスト期間中一度も発動しておらず**NOT_TRIGGERED**（実動作未検証、`EXP-003_daily_loss_limit_function_test`で確認予定）。旧値`UNVERIFIED_OBSERVATION`（DS002スクリーンショット由来）は解消済み） |
 | full_test_plan_status | `PARTIALLY_COMPLETE`（`trading-system/mt4/TEST_PLAN_PHASE5-1.md`全20項目中、コードレビュー代替5項目(#11, #13, #14, #15, #16)を確認済み。**[2026-07-31追記]** #5(連敗数上限到達)・#7(日付変更後の連敗制限解除)相当の挙動は、EXP-002の実バックテストで自然発生的に確認できた（`TEST_PLAN_PHASE5-1.md`が想定する意図的なシナリオ再現とは異なる経路での確認）。#2, #3, #8, #9（日次損失上限関連）は引き続き未実施） |
 | demo_forward_status | `NOT_STARTED` |
