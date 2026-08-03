@@ -86,6 +86,8 @@ Claude Codeおよび開発者は、次のもの以外を「勝てそうだから
 - Risk Constraint
 - Fact（`governance/FACT_SCHEMA.md`準拠。出典・取得時刻・計算方法を伴わないものは不可）
 - Observation（`governance/OBSERVATION_SCHEMA.md`準拠。決定的な計算のみ、方向性の解釈を含まないもの）
+- Diagnostic Study（`diagnostics/DIAGNOSTIC_STUDY_REGISTRY.md`準拠。既存の確定済み実験データに対する
+  原因分析であり、新しい売買ルール・Hypothesisを主張しないもの）
 - 実装上必要な技術要件（バグ修正、依存関係更新等）
 
 新しい特徴量・売買ルール・スコアリング重みを追加する場合は、必ず対応するHypothesis
