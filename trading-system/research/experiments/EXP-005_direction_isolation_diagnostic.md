@@ -59,6 +59,44 @@
 いずれの結果でも、**「売りロジックを停止すべきか」という運用上のDecisionはここでは行わない**。
 本実験はH001・DIAG-001の診断材料を追加するのみ。
 
+## [2026-08-11] Run A（Buy only）結果
+
+### 訂正記録: 初回提出（破棄）
+
+ユーザーの初回Run A提出は`MaxDailyLossPercent=0.3`・`MaxConsecutiveLosses=20`という`EXP-003`の
+値が残ったまま実行されており（`EnableShort=false`のみ変更、リスク管理パラメータの戻し忘れ）、
+Expertsログで実際に日次損失上限が5回発動していたことを確認した。取引数(141件)・勝率(34.04%)・
+最大連敗(7)は`EXP-002`買いサブセットと偶然一致したが、総利益・総損失の内訳が異なり
+（経路依存の影響）、**「方向のみを変える」という1実験1変更点の条件を満たさないため、正式な
+Run Aデータとしては不採用・破棄した**（`DATASET_REGISTRY.md`にDSとして登録していない）。
+
+### 正式なRun A（修正後再実行、DS007として登録）
+
+ユーザーが`MaxDailyLossPercent=2`・`MaxConsecutiveLosses=3`に修正して再実行したレポートを受領し、
+レポート埋め込みパラメータで`EnableLong=true; EnableShort=false; MaxDailyLossPercent=2;
+MaxConsecutiveLosses=3`が`EXP-002`と同一であることを確認した。**DS007として登録**。
+
+| 指標 | Run A（Buy only, DS007） | `EXP-002`買いサブセット（参考） | 差 |
+|---|---|---|---|
+| 取引数 | 142 | 141 | **+1** |
+| 勝率 | 34.51% | 34.04% | +0.47pt |
+| PF | 1.06 | 1.059 | ほぼ同一 |
+| 純利益 | $982.32 | $923.73 | +$58.59（既知の報告値/再計算値の乖離パターンと同規模、`DATASET_REGISTRY.md` DS001の既知の未解決事項と類似） |
+| 最大連敗 | 7 | 7 | 一致 |
+| 最大DD | 1.79% | (未算出、買い単独では未計測) | — |
+
+**解釈**: 取引数がわずか+1件、勝率・PF・最大連敗もほぼ完全に一致した。これは`DIAG-001`で
+事前登録した判定基準「単独実行時の勝率・PFが大きく変わらない場合 → 非対称性は方向自体の信号品質の
+差であり、ポジション枠競合は主因ではない」に該当する。**売りエントリーを無効化しても、買い側の
+成績・機会はほぼ変化しない**（1件の追加機会を除く）。これはポジション枠の奪い合いが買い側の
+成績に与える影響が極めて小さいことを示す一材料であり、`DIAG-001`のENTRY側判定（売り方向の
+信号品質そのものが弱い）と整合する。
+
+**未解決事項**: 本Runに対応するExpertsログは未取得（ユーザーがアップロードしたログは
+`EnableLong=0; EnableShort=1`という別設定のログと判明し、本レポートとは対応しないため使用して
+いない）。よって発動回数等の直接確認はできていないが、レポート埋め込みパラメータの確認と、
+`EXP-002`買いサブセットとの結果の近さから、大きな干渉はなかったと推定する。
+
 ## required_data_sources（憲章第8節）
 
 - USDJPY H1のMT4 Strategy Testerレポート（`.htm`形式） — Run A・Run Bそれぞれ必須
@@ -87,8 +125,8 @@
 | parameters | 上表参照。Run A/Bで`EnableLong`/`EnableShort`のみ異なる |
 | random_seed | 対象外 |
 | code_version | `13fc725a6a6e96fe2dd13af3970e88eeee821d73`（CC002、EAコード自体は変更しない） |
-| data_version | 未確定（実行後に`DATASET_REGISTRY.md`へDS007・DS008等として登録） |
-| execution_date | 未実施 |
+| data_version | Run A: DS007（2026-08-11登録）。Run Bは未確定（実行後にDS008等として登録） |
+| execution_date | Run A: 2026-08-11。Run B: 未実施 |
 
 ## 事前登録チェックリスト
 
@@ -101,7 +139,7 @@
 
 ## status
 
-`READY`（事前登録完了。ユーザーによるMT4実行・データ提供待ち。Run A・Run Bの2本が必要）
+`RUNNING`（Run A完了・DS007登録済み。Run B〔Sell only〕実行・データ提供待ち）
 
 ## limitations（事前に予期される限界）
 
@@ -137,4 +175,4 @@
 ## created_at / updated_at
 
 - created_at: 2026-08-10
-- updated_at: 2026-08-10（事前登録。DIAG-001 Stage2完了後、ユーザー指示により発行）
+- updated_at: 2026-08-11（Run A完了。初回提出はパラメータ誤り〔MaxDailyLossPercent/MaxConsecutiveLosses未修正〕で破棄、修正後の再実行をDS007として登録。取引数+1件・勝率/PF/最大連敗ほぼ一致という結果を記録。Run B待ち）
