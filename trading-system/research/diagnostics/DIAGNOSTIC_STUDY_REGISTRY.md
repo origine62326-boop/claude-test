@@ -37,7 +37,7 @@ COMPLETED / ADOPTED / HOLD / REJECTED / INVALIDATED`）とは意図的に異な�
 
 | diagnostic_id | title | 対象 | 関連Hypothesis | 対象データ | status | Primary Bottleneck判定 | Confidence | 関連ファイル |
 |---|---|---|---|---|---|---|---|---|
-| DIAG-001 | 現行USDJPY H1トレンドフォローEAのEntry/Exitボトルネック診断 | `USDJPY_LowRisk_Trend_EA`(H1, 現行基準戦略) | H001, H002 | DS001(EXP-001), DS004(EXP-002)。DS005(EXP-003)は個別トレード情報なしのため対象外 | **BLOCKED**（Stage1は`COMPLETED`、Stage2はH1 OHLC価格データ受領待ち） | MIXED（DIRECTION_ASYMMETRY=HIGH confidenceで確認、POSITION_SIZING=MEDIUM confidenceで副次的要因と確認、ENTRY vs EXIT=INCONCLUSIVE） | 論点ごとに異なる（本文参照） | `DIAG-001_ENTRY_EXIT_ANALYSIS.md`, `DIAG-001_TRADE_LEVEL_SCHEMA.md`, `DIAG-001_DATA_REQUIREMENTS.md`, `DIAG-001_NEXT_EXPERIMENT_CANDIDATES.md` |
+| DIAG-001 | 現行USDJPY H1トレンドフォローEAのEntry/Exitボトルネック診断 | `USDJPY_LowRisk_Trend_EA`(H1, 現行基準戦略) | H001, H002 | DS001(EXP-001), DS004(EXP-002), DS006(H1価格履歴, Stage2)。DS005(EXP-003)は個別トレード情報なしのため対象外 | **COMPLETED**（Stage1・Stage2とも完了、2026-08-10） | MIXED（ENTRY=MEDIUM-HIGH confidenceで確認、EXIT[利益保護の不在]=MEDIUM-HIGH confidenceで確認、DIRECTION_ASYMMETRY=HIGH confidenceで確認、POSITION_SIZING=MEDIUM confidenceで副次的要因と確認） | 論点ごとに異なる（本文参照、総合MEDIUM-HIGH） | `DIAG-001_ENTRY_EXIT_ANALYSIS.md`, `DIAG-001_TRADE_LEVEL_SCHEMA.md`, `DIAG-001_DATA_REQUIREMENTS.md`, `DIAG-001_NEXT_EXPERIMENT_CANDIDATES.md` |
 
 ## 運用ルール
 
@@ -53,4 +53,4 @@ COMPLETED / ADOPTED / HOLD / REJECTED / INVALIDATED`）とは意図的に異な�
 ## created_at / updated_at
 
 - created_at: 2026-08-02
-- updated_at: 2026-08-02
+- updated_at: 2026-08-10（DIAG-001 Stage2完了、statusをBLOCKED→COMPLETEDへ更新）
