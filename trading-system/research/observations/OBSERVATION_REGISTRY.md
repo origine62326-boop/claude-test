@@ -264,6 +264,60 @@ ATR四分位・EMA20/75/200傾き符号・EMA20-75距離四分位・EMA75-200距
   `trend_duration_bars`（特に買い側のExtended偏り）を最有力候補としつつ、方向との交絡・
   多重検定リスク（累計母数9）を明記した上で提案する
 
+## O-006: trend_duration_barsのPF/勝率検証・交絡チェック・DS010での再現確認
+
+| フィールド | 内容 |
+|---|---|
+| observation_id | O-006 |
+| title | O-005で候補に挙がった`trend_duration_bars`について、(1)損切りの分布だけでなく全トレードのPF/勝率/純損益をバケット別に集計し直し、(2)ATRとの相関を確認し、(3)`DS010`(`EXP-007`)でも同じ傾向が見られるかを確認する |
+| input_dataset_ids | DS004（`EXP-002`, 195トレード）, DS010（`EXP-007`, 239トレード。**DS004とは同一期間・同一エントリーロジックで大部分のトレードが重複するため、独立したOOSデータではない。あくまで一貫性の参考確認と位置づける**）, DS011（USDJPY H1価格履歴） |
+| computation_method | `analysis/loss_regime_classification.py`が出力した全トレード（勝敗問わず）のtrend_tertileラベルごとに、方向別でPF($ベース)・勝率・純損益を集計。加えて`trend_duration_bars`と`atr14_pips`のPearson相関係数を算出し、ATRとの独立性を確認 |
+| computed_at | 2026-08-15 |
+| code_version | `analysis/loss_regime_classification.py`（変更なし、既存出力の再集計） |
+| timezone | サーバー時間（DS001/DS004/DS006/DS010/DS011と同条件） |
+| leakage_check | O-005を継承（問題なし） |
+| known_limitations | `DS010`は`DS004`と大部分重複するトレード集合であり、真のOOS検証ではない。真のOOS確認には別期間データが必要 |
+| status | `VERIFIED` |
+
+### PF/勝率/純損益（trend_tertile別、方向別、DS004）
+
+| | Fresh(浅い) | Established(中間) | Extended(長い) |
+|---|---|---|---|
+| 買い(n=141) | n=41 勝率36.6% PF**1.274** net+1227.68 | n=47 勝率36.2% PF**1.260** net+1202.81 | n=53 勝率30.2% PF**0.768** net-1506.76 |
+| 売り(n=54) | n=25 勝率16.0% PF0.281 net-3474.59 | n=19 勝率21.1% PF0.439 net-1913.39 | n=10 勝率10.0% PF0.184 net-1720.39 |
+
+### DS010（`EXP-007`）での確認
+
+| | Fresh(浅い) | Established(中間) | Extended(長い) |
+|---|---|---|---|
+| 買い(n=171) | n=51 勝率52.9% PF**1.205** net+832.62 | n=53 勝率62.3% PF**1.467** net+1580.38 | n=67 勝率44.8% PF**0.756** net-1506.62 |
+| 売り(n=67) | n=30 勝率43.3% PF0.402 net-2270.51 | n=26 勝率38.5% PF0.391 net-2265.20 | n=11 勝率27.3% PF0.227 net-1404.26 |
+
+### 交絡チェック
+
+- `trend_duration_bars`と`atr14_pips`のPearson相関係数（買い）: **-0.150**（弱い負の相関、ATRの
+  代理指標ではないことを示唆）
+- `trend_tertile`と`atr_quartile`のクロス集計（買い）でも、Extended区分がATR四分位のどれかに
+  偏って集中する様子はない（各ATR四分位に10〜20件程度でほぼ分散）
+- 既存の「ATRは方向と強く交絡する」（O-002）という問題を、`trend_duration_bars`は共有していない
+
+### 結論（このObservationがもたらす示唆）
+
+- **買い側限定で、Extended(伸びきったトレンドへの遅いエントリー)は明確にPFが悪い**:
+  Fresh/Established（PF 1.26〜1.27、いずれもプラス期待値）に対し、Extended（PF 0.77前後）は
+  約40%の相対的な悪化を示す。この傾向は`DS004`・`DS010`の両方で数値がほぼ一致して再現された
+  （買いExtended PF: 0.768 vs 0.756）
+- ATRとの相関は弱く（r=-0.150）、O-002で既に不採用となったATR四分位・EMA傾き符号とは
+  独立した効果である可能性が高い
+- 売り側は`trend_duration_bars`による差が小さく、全区分でPFが低い（売りは方向固有の弱さが
+  支配的で、トレンド成熟度による説明力は限定的）
+- **`DS010`での確認は真のOOS検証ではない**（`DS004`と大部分同じ期間・エントリー）。次の段階に
+  進むには、別期間データでの検証、または実際にフィルターとして実装した上でのバックテストが必要
+- 以上を踏まえ、**「買いエントリーのうち、`trend_duration_bars`が一定以上(Extended)のものを
+  除外する」という新規Hypothesis候補として提案する価値がある**と判断する。ただし閾値の具体的な
+  数値は本Observationのデータから決め打ちせず、Hypothesis登録時に別途根拠を示すか、実験の
+  Guardrailとして扱うこと（`RESEARCH_RULES.md`第3節の精神を維持する）
+
 ## status候補
 
 `DRAFT` / `VERIFIED` / `QUARANTINED`（`OBSERVATION_SCHEMA.md`準拠）
@@ -277,3 +331,5 @@ ATR四分位・EMA20/75/200傾き符号・EMA20-75距離四分位・EMA75-200距
   `DS004`原本ファイルをユーザーが再発見し、checksumが登録済み値と完全一致することを確認済み）
 - updated_at: 2026-08-15（O-005追加。損切りトレードの相場構造分類。多重検定の累計探索母数を
   7→9に更新）
+- updated_at: 2026-08-15（O-006追加。trend_duration_barsのPF検証・ATR相関チェック・DS010での
+  一貫性確認。買い側Extended区分のPF低下がDS004/DS010双方でほぼ同値で再現）
