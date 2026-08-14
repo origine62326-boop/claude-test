@@ -97,8 +97,8 @@ EA (`trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`) には`TradingStartHour`/`
 | parameters | `TradingStartHour=22, TradingStartMinute=0, TradingEndHour=15, TradingEndMinute=0`。他は`EXP-002`と同一 |
 | random_seed | 対象外 |
 | code_version | `2c014aa`（ブランチ`claude/ea-trading-hours-filter`、基点`claude/ea-v0.3.0-risk-management`の`1cea16a`） |
-| data_version | 未確定（MT4実行後に`DATASET_REGISTRY.md`へ登録） |
-| execution_date | 未実施（コード実装は完了。MT4でのコンパイル・バックテスト実行待ち） |
+| data_version | `DS009`（`DATASET_REGISTRY.md`、v1、2026-08-15登録） |
+| execution_date | 2026-08-15（ユーザー環境のMT4 Strategy Testerで実行） |
 
 ## 事前登録チェックリスト
 
@@ -126,10 +126,95 @@ EA (`trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`) には`TradingStartHour`/`
   （`EXP-003`での`MaxDailyLossPercent`/`MaxConsecutiveLosses`と同じ運用、コンパイル済み
   デフォルト値としては変更していない）
 
+## 実行ログ（2026-08-15）
+
+### 1回目の提出（却下）
+
+ユーザーから最初にアップロードされたコンパイルログ・Expertsログ(`1ba098d4-20260814.log`,
+`d49e52cd-20260815_____.log`)を確認したところ、inputs行が`EnableLong=0; EnableShort=1`
+（売りのみ）になっていた。これは本実験の「買い・売り両方にフィルターを適用し、`EXP-002`と
+同一の方向設定で比較する」という事前登録と一致せず、単一変更点の原則からも外れるため、
+**このデータは不採用とし、ユーザーに`EnableLong=1, EnableShort=1`での再実行を依頼した**
+（おそらく`EXP-005`Run B時の入力値が残っていたものと推定）。
+
+### 2回目の提出（採用）
+
+再提出された`.htm`レポート(`b3a16ebc-log7.htm`)と、対応するExpertsログ
+(`f0fdb7c6-20260815.log`、7957行目以降のブロック)を確認。
+
+- レポート埋め込みパラメータ: `EnableLong=true; EnableShort=true`、`TradingStartHour=22;
+  TradingStartMinute=0; TradingEndHour=15; TradingEndMinute=0`、他は`EXP-002`(DS004)と同一
+- Expertsログで`取引時間フィルター(Phase7)は許可範囲 22:0-15:0 で有効です`という初期化ログ、
+  および`取引時間外のため新規注文をスキップ`が1305回発生していることを確認（フィルターが
+  実際に機能していたことの直接的な証拠）
+- 同ログでERRORは0件、`発注成功`161件（レポートの総取引数161件と一致）、最大連敗制限は
+  1回発動、日次損失上限は0回発動
+- コンパイルログでの明示的な「0 errors / 0 warnings」表示は今回も未確認のまま（アップロード
+  されたコンパイルログには`Compiling`イベントのみが記録され、結果行が含まれていなかった）。
+  ただしEAが正常にロードし161件の発注に成功している事実から、コンパイルエラー(0 errors)は
+  間接的に確認できる。warning件数の直接確認は未了として記録する
+- 本データを`DS009`として`DATASET_REGISTRY.md`へ登録した
+
+### 結果集計（`analysis/parse_mt4_trades.py` / `direction_analysis.py`、および`feature_extraction.py`と
+同一の実現R計算式による再計算）
+
+| 指標 | 買いサブセット | 売りサブセット（参考） |
+|---|---|---|
+| 取引数 | 119（118決済 + 1未決済） | 42（全決済） |
+| PF（レポート集計と同一計算） | 1.047 | 0.351 |
+| PF（R倍数ベース） | 1.021 | 0.473 |
+| 勝率 | 33.9% | 19.05% |
+| 純損益 | +604.87 | -5123.09 |
+| 期待値R（平均realized_R、n=118） | **+0.0137** | -0.4254 |
+
+全体（買い+売り）: 総取引数161、PF0.78（レポート公式値）、最大DD 5.63%(5667.31)、
+モデリング品質57.79%（`EXP-002`と同一のヒストリーデータであることの傍証）。
+
+### 判定（事前登録した`acceptance_criteria`との照合）
+
+| 区分 | 事前登録した基準 | 結果 | 判定 |
+|---|---|---|---|
+| Primary Metric | 買い期待値R が `EXP-002`買いサブセット(+0.022〜+0.13程度)を上回ること | +0.0137（baseline下限の+0.022すら下回る） | **未達** |
+| Secondary: PF | `EXP-002`買いサブセット(1.059)を上回ることが望ましい | 1.021〜1.047（ほぼ横ばい〜わずかに低下） | 未達（ただし望ましい、の位置づけ） |
+| Secondary: 取引回数 | 約31%減少見込み（許容） | 141→119（約15.6%減少、見込みより少ない減少） | 参考記録 |
+| Guardrail: 最低取引件数 | 買いのみで100件以上 | 119件 | 達成 |
+| Guardrail: 最大DD | `EXP-002`(7.45%)から悪化しないこと | 5.63%（改善） | 達成 |
+
+事前登録した`rejection_criteria`により、Primary Metricが`EXP-002`買いサブセット以下の場合は
+`REJECTED`ではなく`HOLD`とする。本結果はこれに該当する。
+
+## decision
+
+`HOLD`
+
+## acceptance_reason / rejection_reason
+
+`REJECTED`の基準（Guardrail未達等）には該当しないため`REJECTED`ではない。一方で`ADOPTED`の
+基準（Primary Metric達成）も満たしていないため`ADOPTED`でもない。事前登録した
+`rejection_criteria`の定義通り`HOLD`とする。Guardrail Metrics（最低取引件数・最大DD）は
+両方とも達成しており、実装・実行そのものに問題があったわけではない。
+
+## 解釈・考察（判定を書き換えない範囲でのメモ）
+
+- `O-002`の観察（NYセッションの買いはPF0.695・期待値R-0.227で唯一マイナス）は**既存トレードの
+  事後的な絞り込み**に基づくものだった。実際にNYセッションでの新規エントリーを止めると、その
+  時間帯を跨いでいた含み益/含み損ポジションの決済タイミングや、翌セッションのEMA/ADX状態が
+  変わり、以降のトレードの発生パターンそのものが変化する（経路依存効果、`EXP-002`/`EXP-003`
+  で確認済みの現象と同種）。今回の結果は、この経路依存性により観察時点の効果がそのまま
+  「実装して差し引く」形では再現しなかった、という解釈と整合する
+- 一方で`REJECTED`にせず`HOLD`とした事前登録の判断は妥当だったと考えられる: Guardrail
+  Metrics（取引数・最大DD）はいずれも達成しており、フィルター実装自体に欠陥があったことを
+  示す証拠はない。あくまで「期待していたほどの改善が見られなかった」という結果である
+- 本レジストリの事前登録メモにある通り「何度もHOLDが続く場合はH004自体をREJECTEDとする判断も
+  今後検討する」との記載があるが、今回はHOLDの1回目であり、この基準には未到達
+
 ## status
 
-**[2026-08-14更新]** `READY`（EAコード変更の承認・実装・push完了。コンパイル確認・
-バックテスト実行はユーザー側で今後実施し、結果受領後に本ファイルを追記更新する）
+**[2026-08-15更新]** `COMPLETED`（実行・判定完了。判定は`HOLD`。H004自体を`REJECTED`とするか
+どうかは、下記の解釈を踏まえて別途検討する）
+
+~~`READY`（EAコード変更の承認・実装・push完了。コンパイル確認・バックテスト実行はユーザー側で
+今後実施し、結果受領後に本ファイルを追記更新する）~~ （2026-08-14時点の記録として残す）
 
 ~~`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）~~
 （2026-08-11時点の記録として残す）
@@ -154,3 +239,5 @@ EA (`trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`) には`TradingStartHour`/`
 - updated_at: 2026-08-11（事前登録。H004実験登録の承認を受けて発行。EAコード変更は未実施、別途承認が必要）
 - updated_at: 2026-08-14（ユーザー承認を受けてEAコード変更を実装・push。status DRAFT→READY。
   MT4でのコンパイル・実行はユーザー側で今後実施）
+- updated_at: 2026-08-15（MT4実行結果(DS009)を受領・検証し、判定を確定。status READY→COMPLETED、
+  decision=HOLD。1回目提出（方向設定誤り）は却下し、2回目提出を採用）

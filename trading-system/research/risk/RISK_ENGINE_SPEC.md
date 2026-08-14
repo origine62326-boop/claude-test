@@ -49,7 +49,7 @@
 | スプレッド上限 | 実装あり | `IsSpreadAcceptable()`, `MaxSpreadPips`入力 | B |
 | 発注制約 | 実装あり（リトライ上限、TradeContext待機、リトライ可否のエラー分類） | `SafeOrderSend()`, `WaitForTradeContext()`, `IsRetryableError()` | B |
 | 口座制約 | 実装あり（デモ/実口座判定、`AllowLiveTrading`既定false） | `IsLiveTradingBlocked()` | B |
-| 稼働時間制約 | `[IMPLEMENTED_ON_UNMERGED_BRANCH]` **[2026-08-14更新]** `claude/ea-trading-hours-filter`（基点`claude/ea-v0.3.0-risk-management`、コミット`2c014aa`）で`IsWithinTradingHours()`を実装し`TryEnter()`に接続した（`EXP-006`/H004検証用）。main・`claude/ea-v0.3.0-risk-management`単体には引き続き未接続のまま残っている。コンパイル確認・バックテスト実行はまだユーザー側で未実施 | `IsWithinTradingHours()`, `TradingStartHour`等入力（`claude/ea-trading-hours-filter`のみ） | B |
+| 稼働時間制約 | `[IMPLEMENTED_ON_UNMERGED_BRANCH]` **[2026-08-14更新]** `claude/ea-trading-hours-filter`（基点`claude/ea-v0.3.0-risk-management`、コミット`2c014aa`）で`IsWithinTradingHours()`を実装し`TryEnter()`に接続した（`EXP-006`/H004検証用）。main・`claude/ea-v0.3.0-risk-management`単体には引き続き未接続のまま残っている。**[2026-08-15更新]** バックテスト実行済み(DS009、`EXP-006`)。ERRORなく161件発注、フィルターは1305回正常に発動（Expertsログで確認）。機能としてはVERIFIED。ただしH004の主張（買い方向の期待値改善）自体は本実験ではPrimary Metric未達でHOLD | `IsWithinTradingHours()`, `TradingStartHour`等入力（`claude/ea-trading-hours-filter`のみ） | B |
 | データ品質エラー時停止 | 部分実装（`OrderSelect`失敗時に「判定不能→到達扱い(ブロック)」という安全側フォールバックあり。ただし本憲章が求める「データソース全般の品質チェック」の枠組みではない） | `GetTodayRealizedNet()`, `GetFloatingLossOnly()`のok引数パターン | C |
 
 分類凡例（`CURRENT_SYSTEM_AUDIT.md`と同一基準）:
