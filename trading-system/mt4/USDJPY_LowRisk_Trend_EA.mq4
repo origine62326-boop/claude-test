@@ -488,6 +488,25 @@ bool IsSpreadAcceptable()
 }
 
 //====================================================================
+// 取引時間フィルター (Phase7)
+//
+// TradingStartHour:TradingStartMinute 〜 TradingEndHour:TradingEndMinute
+// (サーバー時間)を許可範囲とする。開始>終了の場合は日をまたぐ範囲として扱う
+// (例: 開始22:00・終了15:00なら「22:00〜翌15:00」が許可範囲)。
+//====================================================================
+bool IsWithinTradingHours()
+{
+   int nowMinutes   = TimeHour(TimeCurrent())*60 + TimeMinute(TimeCurrent());
+   int startMinutes = TradingStartHour*60 + TradingStartMinute;
+   int endMinutes   = TradingEndHour*60 + TradingEndMinute;
+
+   if(startMinutes <= endMinutes)
+      return (nowMinutes >= startMinutes && nowMinutes < endMinutes);
+   else
+      return (nowMinutes >= startMinutes || nowMinutes < endMinutes);
+}
+
+//====================================================================
 // ポジション確認 (Symbol + MagicNumber 一致のみ)
 //====================================================================
 bool HasOpenPosition()
@@ -1253,7 +1272,13 @@ void TryEnter()
       return;
    }
 
-   // 取引時間フィルターは Phase7 で実装予定(v0.3.0のこの段階では未実装)
+   if(!IsWithinTradingHours())
+   {
+      LogInfo("取引時間外のため新規注文をスキップ: " + TimeToString(TimeCurrent(), TIME_MINUTES) +
+              " (許可範囲 " + IntegerToString(TradingStartHour) + ":" + IntegerToString(TradingStartMinute) +
+              "-" + IntegerToString(TradingEndHour) + ":" + IntegerToString(TradingEndMinute) + ")");
+      return;
+   }
 
    if(CheckBuySignal())
    {
@@ -1294,8 +1319,11 @@ int OnInit()
    // 依存しない。
    EnsureDailyRiskReferenceBalance();
 
-   LogInfo("初期化完了。Phase5-2(建値移動/トレーリング)・"
-           + "Phase7(取引時間フィルター)は未実装です。");
+   LogInfo("初期化完了。Phase5-2(建値移動/トレーリング)は未実装です。"
+           + "取引時間フィルター(Phase7)は許可範囲 "
+           + IntegerToString(TradingStartHour) + ":" + IntegerToString(TradingStartMinute)
+           + "-" + IntegerToString(TradingEndHour) + ":" + IntegerToString(TradingEndMinute)
+           + " で有効です。");
 
    g_initializedOk = true;
    return INIT_SUCCEEDED;

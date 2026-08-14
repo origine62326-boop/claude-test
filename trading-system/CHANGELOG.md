@@ -14,6 +14,30 @@
 
 各バージョンの正式な記録(バックテスト結果・比較レポート)は `releases/vX.Y.Z/` に保存する。
 
+## 開発中: Phase7 取引時間フィルター (`EXP-006`検証用)
+
+ブランチ `claude/ea-trading-hours-filter`（基点: `claude/ea-v0.3.0-risk-management`、Phase5-1込み）。
+**コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。** `trading-system/research/hypotheses/HYPOTHESIS_REGISTRY.md`
+のH004、`trading-system/research/experiments/EXP-006_ny_session_exclusion.md`の事前登録に基づく実装。
+エントリー条件(EMA/ADX/押し目判定)・決済条件・ロット計算・Phase5-1のリスク管理ロジックには変更なし。
+
+### 変更点 (`mt4/USDJPY_LowRisk_Trend_EA.mq4`)
+
+- 既存の未接続入力パラメータ`TradingStartHour`/`TradingStartMinute`/`TradingEndHour`/`TradingEndMinute`
+  を`TryEnter()`の新規エントリー判定に接続する`IsWithinTradingHours()`を追加。開始>終了の場合は
+  日をまたぐ許可範囲として扱う(例: 開始22:00・終了15:00なら「22:00〜翌15:00」が許可範囲)
+  ※新しい入力パラメータの追加はなし。既存パラメータのデフォルト値(8:00-22:00)も変更していない
+- `OnInit`の初期化ログから「Phase7(取引時間フィルター)は未実装です」の記述を削除し、実際に
+  適用される許可範囲をログ出力するよう変更
+
+### 既知の制約
+
+- コンパイル確認はユーザー環境のMetaEditorで実施が必要(このセッションではMQL4コンパイラを
+  実行できないため、手動コードレビューのみ実施)
+- `EXP-006`の検証設定値(`TradingStartHour=22, TradingEndHour=15`)はストラテジーテスターの
+  入力パラメータとして都度指定するものであり、コンパイル済みデフォルト値としては変更していない
+  (`EXP-003`での`MaxDailyLossPercent`/`MaxConsecutiveLosses`と同じ運用)
+
 ## v0.3.0 (開発中: Phase5-1 日次損失上限・連敗制限)
 
 ブランチ `claude/ea-v0.3.0-risk-management`。**コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。**
