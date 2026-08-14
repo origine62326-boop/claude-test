@@ -4,6 +4,12 @@
 ユーザーが2026-08-11、H004の実験登録を承認したことを受けて発行する。本ファイル作成時点では
 EAコードは一切変更していない（後述「実装の要否」参照、実行には別途承認が必要）。**
 
+**[2026-08-14追記（訂正ではなく追記。上記は登録時点の事実として残す）]** ユーザーが
+「実行する」と明示的に承認（`RESEARCH_RULES.md`第13節の半自動PDCAループに基づく）。
+これを受けて`IsWithinTradingHours()`の実装を完了した。詳細は下記「実装ログ」参照。
+**MT4でのコンパイル・バックテスト実行はまだユーザー側で未実施**（本サンドボックスに
+MQL4コンパイラがないため、コンパイル確認・実行結果の受領を待って本ファイルをさらに更新する）。
+
 ## 基本情報
 
 | フィールド | 内容 |
@@ -90,9 +96,9 @@ EA (`trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`) には`TradingStartHour`/`
 |---|---|
 | parameters | `TradingStartHour=22, TradingStartMinute=0, TradingEndHour=15, TradingEndMinute=0`。他は`EXP-002`と同一 |
 | random_seed | 対象外 |
-| code_version | 未確定（コード実装後に確定。新規ブランチを想定） |
-| data_version | 未確定（実行後に`DATASET_REGISTRY.md`へ登録） |
-| execution_date | 未実施（コード実装の承認待ち） |
+| code_version | `2c014aa`（ブランチ`claude/ea-trading-hours-filter`、基点`claude/ea-v0.3.0-risk-management`の`1cea16a`） |
+| data_version | 未確定（MT4実行後に`DATASET_REGISTRY.md`へ登録） |
+| execution_date | 未実施（コード実装は完了。MT4でのコンパイル・バックテスト実行待ち） |
 
 ## 事前登録チェックリスト
 
@@ -100,12 +106,33 @@ EA (`trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`) には`TradingStartHour`/`
 - [x] acceptance_criteria（Primary/Secondary/Guardrail）を事前登録している
 - [x] 未来データを参照する特徴量が含まれていない（時間帯フィルターはentry_time時点で判定可能な情報のみ使用）
 - [x] H004が同一データからの探索的発見であることを明記し、本実験の結果だけでは確証的な検証にならない可能性を記録している（下記limitations参照）
-- [ ] EAコード変更の実施についてユーザーの承認を得ている（**未実施、本実験の実行条件**）
-- [ ] 実装ブランチについてユーザーと合意している（未実施）
+- [x] EAコード変更の実施についてユーザーの承認を得ている（2026-08-14「実行する」により承認）
+- [x] 実装ブランチについてユーザーと合意している（`claude/ea-trading-hours-filter`を提案し、ユーザー承認後に作成・実装・push済み）
+
+## 実装ログ（2026-08-14）
+
+- 実装ブランチ: `claude/ea-trading-hours-filter`（基点: `claude/ea-v0.3.0-risk-management`＝CC002/Phase5-1。
+  `EXP-002`ベースラインとの単一変更点比較を成立させるため、`main`ではなくCC002から分岐した）
+- 実装コミット: `2c014aa`（"feat: implement Phase7 trading-hours filter (EXP-006 / H004)"）
+- 変更内容: `IsWithinTradingHours()`を新規追加し、`TryEnter()`内の`IsSpreadAcceptable()`チェックと
+  同様の位置に`if(!IsWithinTradingHours()) { ログ出力; return; }`を追加。開始>終了の日またぎ判定を実装。
+  新規入力パラメータの追加なし、既存デフォルト値(8:00-22:00)も変更なし
+- diff範囲: `trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`の1ファイルのみ（`git diff --stat`で確認、
+  31 insertions, 3 deletions）。エントリー条件・決済条件・ロット計算・Phase5-1ロジックへの変更なし
+- コンパイル確認: **未実施**（ユーザー側MetaEditorでの確認待ち）
+- テスト: `pytest tests/ -q` 36 passed（Pythonパイプライン側、EA本体はMQL4のためpytest対象外）
+- H004検証用の入力値`TradingStartHour=22, TradingStartMinute=0, TradingEndHour=15,
+  TradingEndMinute=0`は、ストラテジーテスターの入力パラメータとして実行時に指定する
+  （`EXP-003`での`MaxDailyLossPercent`/`MaxConsecutiveLosses`と同じ運用、コンパイル済み
+  デフォルト値としては変更していない）
 
 ## status
 
-`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）
+**[2026-08-14更新]** `READY`（EAコード変更の承認・実装・push完了。コンパイル確認・
+バックテスト実行はユーザー側で今後実施し、結果受領後に本ファイルを追記更新する）
+
+~~`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）~~
+（2026-08-11時点の記録として残す）
 
 ## limitations（事前に予期される限界）
 
@@ -125,3 +152,5 @@ EA (`trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`) には`TradingStartHour`/`
 
 - created_at: 2026-08-11
 - updated_at: 2026-08-11（事前登録。H004実験登録の承認を受けて発行。EAコード変更は未実施、別途承認が必要）
+- updated_at: 2026-08-14（ユーザー承認を受けてEAコード変更を実装・push。status DRAFT→READY。
+  MT4でのコンパイル・実行はユーザー側で今後実施）
