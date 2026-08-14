@@ -14,6 +14,35 @@
 
 各バージョンの正式な記録(バックテスト結果・比較レポート)は `releases/vX.Y.Z/` に保存する。
 
+## 開発中: Phase5-2 建値移動 (`EXP-007`検証用)
+
+ブランチ `claude/ea-breakeven-exit-protection`（基点: `claude/ea-v0.3.0-risk-management`、Phase5-1込み）。
+**コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。** `trading-system/research/hypotheses/HYPOTHESIS_REGISTRY.md`
+のH005、`trading-system/research/experiments/EXP-007_breakeven_exit_protection.md`の事前登録に基づく実装。
+エントリー条件(EMA/ADX/押し目判定)・TP/SL初期値・ロット計算・Phase5-1のリスク管理ロジックには変更なし。
+
+### 変更点 (`mt4/USDJPY_LowRisk_Trend_EA.mq4`)
+
+- 既存の未接続入力パラメータ`EnableBreakEven`/`BreakEvenAtR`/`BreakEvenOffsetPips`を、新規関数
+  `ManageOpenPosition()`経由でポジション管理に接続。`OnTick()`から毎tick呼び出し、新規バー確定を
+  待たずに含み益+1R到達を検知する。`TryEnter()`のシグナル判定とは独立した経路であり、新規
+  エントリーには一切影響しない
+- `ExecuteEntry()`時に、その注文の「当初SL」を`StoreOriginalStopLoss()`でGlobalVariableへ保存。
+  `OrderStopLoss()`は建値移動後に変化するため、含み益のR換算には当初SLを基準にした
+  リスク幅を使う（`GetOriginalStopLoss()`で復元。判定不能な場合は安全側として建値移動しない）
+  ※新しい入力パラメータの追加はなし。既存デフォルト値(`EnableBreakEven=true`,
+  `BreakEvenAtR=1.0`, `BreakEvenOffsetPips=2.0`)も変更していない
+- `EnableTrailingStop`（トレーリングストップ）・`EnableFridayClose`（金曜決済）は本変更の対象外。
+  引き続き未接続のまま残す
+- `OnInit`の初期化ログを、建値移動が実際に有効な設定値で動作していることが分かるよう更新
+
+### 既知の制約
+
+- コンパイル確認はユーザー環境のMetaEditorで実施が必要(このセッションではMQL4コンパイラを
+  実行できないため、手動コードレビューのみ実施)
+- `EXP-007`の検証はストラテジーテスターの既定の入力パラメータ値（コンパイル済みデフォルトと同一）
+  で実施する想定（`EXP-006`のような非標準の試験値は使わない）
+
 ## v0.3.0 (開発中: Phase5-1 日次損失上限・連敗制限)
 
 ブランチ `claude/ea-v0.3.0-risk-management`。**コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。**

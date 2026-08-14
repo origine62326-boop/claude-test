@@ -1188,6 +1188,75 @@ int OpenPositionWithECNFallback(int direction, double lot, double sl, double tp,
 }
 
 //====================================================================
+// Exit保護: 建値移動 (Phase5-2の一部、H005/EXP-007)
+//
+// TryEnter()のシグナル判定とは独立した経路。新規エントリーの可否には一切影響しない。
+// 含み益のR換算には、ExecuteEntry()時に保存した「当初SL」を使う(OrderStopLoss()は
+// 建値移動後に変化するため、当初のリスク幅の基準として使えない)。
+// 定義をExecuteEntry()より前に置くことで、呼び出し前に定義済みとなるようにしている。
+//====================================================================
+void StoreOriginalStopLoss(int ticket, double slPrice)
+{
+   GlobalVariableSet(GVName("OrigSL_" + IntegerToString(ticket)), slPrice);
+}
+
+bool GetOriginalStopLoss(int ticket, double &outSL)
+{
+   string name = GVName("OrigSL_" + IntegerToString(ticket));
+   if(!GlobalVariableCheck(name)) return false;
+   outSL = GlobalVariableGet(name);
+   return IsValidPositiveNumber(outSL);
+}
+
+// 保有中の全ポジション(Symbol+Magic一致)について、含み益がBreakEvenAtR以上に達していれば
+// SLのみを建値+オフセットへ移動する。TP・エントリー条件には一切影響しない。
+// 当初SLが判定不能な場合は安全側として何もしない(建値移動しない)。
+void ManageOpenPosition()
+{
+   if(!EnableBreakEven) return;
+
+   for(int i=OrdersTotal()-1; i>=0; i--)
+   {
+      if(!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if(OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
+      if(OrderType()!=OP_BUY && OrderType()!=OP_SELL) continue;
+
+      int ticket = OrderTicket();
+      int direction = (OrderType()==OP_BUY) ? 1 : -1;
+      double entryPrice = OrderOpenPrice();
+      double currentSL = OrderStopLoss();
+
+      double origSL;
+      if(!GetOriginalStopLoss(ticket, origSL)) continue; // 判定不能 → 安全側(何もしない)
+
+      double stopDistPips = PriceToPips(MathAbs(entryPrice - origSL));
+      if(stopDistPips<=0) continue;
+
+      double currentPrice = (direction==1) ? Bid : Ask;
+      double floatingPips = (direction==1) ? PriceToPips(currentPrice - entryPrice)
+                                            : PriceToPips(entryPrice - currentPrice);
+      double floatingProfitR = floatingPips / stopDistPips;
+
+      if(floatingProfitR < BreakEvenAtR) continue;
+
+      double targetSL = (direction==1)
+         ? NormalizeDouble(entryPrice + PipsToPrice(BreakEvenOffsetPips), Digits)
+         : NormalizeDouble(entryPrice - PipsToPrice(BreakEvenOffsetPips), Digits);
+
+      // 既に目標以上に有利な位置までSLが移動済みならスキップ(冪等性、毎tickの再送信を防ぐ)
+      bool alreadyAtOrBeyondTarget = (direction==1) ? (currentSL >= targetSL - Point/2)
+                                                     : (currentSL <= targetSL + Point/2);
+      if(alreadyAtOrBeyondTarget) continue;
+
+      if(SafeOrderModify(ticket, entryPrice, targetSL, OrderTakeProfit()))
+         LogInfo("建値移動: ticket=" + IntegerToString(ticket) + " floatingR=" + DoubleToString(floatingProfitR,2) +
+                 " 新SL=" + DoubleToString(targetSL, Digits));
+      else
+         LogError("建値移動のSafeOrderModifyに失敗しました ticket=" + IntegerToString(ticket));
+   }
+}
+
+//====================================================================
 // エントリー実行
 //====================================================================
 void ExecuteEntry(int direction)
@@ -1210,6 +1279,8 @@ void ExecuteEntry(int direction)
    int ticket = OpenPositionWithECNFallback(direction, lot, slPrice, tpPrice, comment);
    if(ticket<0)
       LogError("エントリーに失敗しました direction=" + IntegerToString(direction));
+   else
+      StoreOriginalStopLoss(ticket, slPrice);
 }
 
 //====================================================================
@@ -1294,8 +1365,9 @@ int OnInit()
    // 依存しない。
    EnsureDailyRiskReferenceBalance();
 
-   LogInfo("初期化完了。Phase5-2(建値移動/トレーリング)・"
-           + "Phase7(取引時間フィルター)は未実装です。");
+   LogInfo("初期化完了。建値移動(Phase5-2の一部、EnableBreakEven=" + (EnableBreakEven ? "true" : "false") +
+           ", BreakEvenAtR=" + DoubleToString(BreakEvenAtR,2) + "R, Offset=" + DoubleToString(BreakEvenOffsetPips,1) +
+           "pips)は有効です。トレーリングストップ・金曜決済・Phase7(取引時間フィルター)は未実装です。");
 
    g_initializedOk = true;
    return INIT_SUCCEEDED;
@@ -1321,5 +1393,8 @@ void OnTick()
       TryEnter();
    }
 
-   // Phase5-2でここにポジション管理(建値移動/トレーリング/金曜決済)を追加予定
+   ManageOpenPosition(); // 建値移動(H005/EXP-007)。新規バー確定を待たず毎tick判定する
+
+   // トレーリングストップ・金曜決済はPhase5-2の対象範囲だが、本変更(EXP-007)の対象外のため
+   // 引き続き未実装のまま(EnableTrailingStop/EnableFridayCloseは接続していない)
 }
