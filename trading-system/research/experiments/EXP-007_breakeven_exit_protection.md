@@ -97,8 +97,31 @@ EAコードの変更が必要**。想定する最小限の変更:
 - [x] acceptance_criteria（Primary/Secondary/Guardrail）を事前登録している
 - [x] 未来データを参照する特徴量が含まれていない（建値移動判定は現在の含み益のみを使用）
 - [x] H005がMFE/MAE実測（DIAG-001 Stage2）という直接的な構造分析に基づくことを明記している（H004のような事後的な特徴量相関ではない点が異なる）
-- [ ] EAコード変更の実施についてユーザーの承認を得ている（**未実施、本実験の実行条件**）
-- [ ] 実装ブランチについてユーザーと合意している（未実施）
+- [x] EAコード変更の実施についてユーザーの承認を得ている（2026-08-15「進んで」により承認）
+- [x] 実装ブランチについてユーザーと合意している（`claude/ea-breakeven-exit-protection`を提案し、ユーザー承認後に作成・実装・push済み）
+
+## 実装ログ（2026-08-15）
+
+- 実装ブランチ: `claude/ea-breakeven-exit-protection`（基点: `claude/ea-v0.3.0-risk-management`＝CC002/Phase5-1。
+  `EXP-002`ベースラインとの単一変更点比較を成立させるため、`claude/ea-trading-hours-filter`ではなく
+  CC002から直接分岐した。`EXP-006`〔H004〕は`HOLD`のため、その時間帯フィルターは本実験に含めない）
+- 実装コミット: `d2964d9`（"feat: implement Phase5-2 breakeven exit protection (EXP-007 / H005)"）
+- 変更内容: `ManageOpenPosition()`を新規追加し、`OnTick()`から毎tick呼び出す（`TryEnter()`とは独立
+  した経路）。`ExecuteEntry()`時に`StoreOriginalStopLoss()`で当初SLをGlobalVariableへ保存し、
+  `OrderStopLoss()`が建値移動後に変化しても正しいリスク幅(R)で含み益を計算できるようにした。
+  含み益が`BreakEvenAtR`以上に達すると、`SafeOrderModify()`でSLのみを建値+`BreakEvenOffsetPips`へ
+  移動する（TP・エントリー条件には一切影響しない）。冪等性は「現在のSLが目標建値以上に有利な
+  位置にあるか」の比較で担保し、フラグ変数は使っていない
+  新規入力パラメータの追加なし、既存デフォルト値(`EnableBreakEven=true, BreakEvenAtR=1.0,
+  BreakEvenOffsetPips=2.0`)も変更なし
+- diff範囲: `trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`の1ファイルのみ（`git diff --stat`で確認、
+  78 insertions, 3 deletions）。エントリー条件・TP/SL初期値・ロット計算・Phase5-1ロジックへの
+  変更なし。ブレース数(`{`/`}`)の対応が一致していることも確認済み（166/166）
+- コンパイル確認: **未実施**（ユーザー側MetaEditorでの確認待ち。特に「0 warnings」の明示確認を
+  今回はお願いしている）
+- テスト: `pytest tests/ -q` 36 passed（Pythonパイプライン側、EA本体はMQL4のためpytest対象外）
+- 検証用パラメータは`EXP-006`と異なり、コンパイル済みデフォルト値（`EnableBreakEven=true,
+  BreakEvenAtR=1.0, BreakEvenOffsetPips=2.0`）をそのまま使用する想定
 
 ## limitations（事前に予期される限界）
 
@@ -121,9 +144,22 @@ EAコードの変更が必要**。想定する最小限の変更:
 
 ## status
 
-`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）
+**[2026-08-15更新]** `READY`（EAコード変更の承認・実装・push完了。コンパイル確認・
+バックテスト実行はユーザー側で今後実施し、結果受領後に本ファイルを追記更新する）
+
+~~`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）~~
+（2026-08-15登録時点の記録として残す）
+
+## パラメータ・再現性情報（更新）
+
+| フィールド | 内容 |
+|---|---|
+| code_version | `d2964d9`（ブランチ`claude/ea-breakeven-exit-protection`、基点`claude/ea-v0.3.0-risk-management`の`1cea16a`） |
+| execution_date | 未実施（コード実装は完了。MT4でのコンパイル・バックテスト実行待ち） |
 
 ## created_at / updated_at
 
 - created_at: 2026-08-15
 - updated_at: 2026-08-15（事前登録。H005実験登録の承認を受けて発行。EAコード変更は未実施、別途承認が必要）
+- updated_at: 2026-08-15（ユーザー承認を受けてEAコード変更を実装・push。status DRAFT→READY。
+  MT4でのコンパイル・実行はユーザー側で今後実施）
