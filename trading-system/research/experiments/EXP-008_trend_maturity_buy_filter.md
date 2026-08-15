@@ -100,8 +100,28 @@ ATR等との交絡を確認済み、かつ2データセットでの一貫性も�
 - [x] 未来データを参照する特徴量が含まれていない（`trend_duration_bars`はentry_time時点で判定可能な過去バーのみを使用）
 - [x] H006が同一データからの探索的発見であることを明記し、閾値の決め方（中立的な三分位分割の中間値）を具体的に開示している
 - [x] Primary Metricの正確な基準値(+0.0180)を実行前に`DS004`の生データから確定している（`EXP-007`の反省を踏まえた対応）
-- [ ] EAコード変更の実施についてユーザーの承認を得ている（**未実施、本実験の実行条件**）
-- [ ] 実装ブランチについてユーザーと合意している（未実施）
+- [x] EAコード変更の実施についてユーザーの承認を得ている（2026-08-15「進んで」により承認）
+- [x] 実装ブランチについてユーザーと合意している（`claude/ea-trend-maturity-filter`を提案し、ユーザー承認後に作成・実装・push済み）
+
+## 実装ログ（2026-08-15）
+
+- 実装ブランチ: `claude/ea-trend-maturity-filter`（基点: `claude/ea-v0.3.0-risk-management`＝CC002/Phase5-1。
+  `EXP-002`ベースラインとの単一変更点比較を成立させるため、他の実験用ブランチではなくCC002から
+  直接分岐した）
+- 実装コミット: `ff37c85`（"feat: implement trend maturity buy-only filter (EXP-008 / H006)"）
+- 変更内容: 新規入力`MaxBuyTrendDurationBars`(デフォルト0=無効)を追加。新規関数
+  `GetTrendDurationBars(direction, startShift)`を追加し、`startShift`から遡って
+  `GetTrendDirection()`が指定方向と同一の値を返し続けるバー数を数える
+  （`analysis/loss_regime_classification.py`の`compute_trend_duration()`と同一ロジック）。
+  `CheckBuySignal()`の末尾（既存の全シグナル判定が真になった後）に最終ゲートとして追加。
+  `CheckSellSignal()`は無変更
+- diff範囲: `trading-system/mt4/USDJPY_LowRisk_Trend_EA.mq4`の1ファイルのみ（`git diff --stat`で確認、
+  27 insertions, 1 deletion）。エントリー条件(既存部分)・決済条件・ロット計算・Phase5-1ロジックへの
+  変更なし。ブレース数(`{`/`}`)の対応が一致していることも確認済み（165/165）、関数重複定義もなし
+- コンパイル確認: **未実施**（ユーザー側MetaEditorでの確認待ち）
+- テスト: `pytest tests/ -q` 36 passed（Pythonパイプライン側、EA本体はMQL4のためpytest対象外）
+- H006検証用の入力値`MaxBuyTrendDurationBars=50`は、ストラテジーテスターの入力パラメータとして
+  実行時に指定する（コンパイル済みデフォルト値0=無効のままでは効果が出ないため必須）
 
 ## limitations（事前に予期される限界）
 
@@ -122,7 +142,18 @@ ATR等との交絡を確認済み、かつ2データセットでの一貫性も�
 
 ## status
 
-`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）
+**[2026-08-15更新]** `READY`（EAコード変更の承認・実装・push完了。コンパイル確認・
+バックテスト実行はユーザー側で今後実施し、結果受領後に本ファイルを追記更新する）
+
+~~`DRAFT`（Primary/Secondary/Guardrail Metricsの事前登録は完了。EAコード変更の承認待ちのため`READY`にはまだ進めない）~~
+（2026-08-15登録時点の記録として残す）
+
+## パラメータ・再現性情報（更新）
+
+| フィールド | 内容 |
+|---|---|
+| code_version | `ff37c85`（ブランチ`claude/ea-trend-maturity-filter`、基点`claude/ea-v0.3.0-risk-management`の`1cea16a`） |
+| execution_date | 未実施（コード実装は完了。MT4でのコンパイル・バックテスト実行待ち） |
 
 ## created_at / updated_at
 
@@ -130,3 +161,5 @@ ATR等との交絡を確認済み、かつ2データセットでの一貫性も�
 - updated_at: 2026-08-15（事前登録。H006実験登録の承認を受けて発行。EAコード変更は未実施、別途承認が必要）
 - updated_at: 2026-08-15（Primary Metricの正確な基準値(+0.0180)を`DS004`生データから確定。
   `EXP-007`で未実施だった手順を今回は先に完了させた）
+- updated_at: 2026-08-15（ユーザー承認を受けてEAコード変更を実装・push。status DRAFT→READY。
+  MT4でのコンパイル・実行はユーザー側で今後実施）
