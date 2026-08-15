@@ -204,6 +204,43 @@ Phase 1-9とは**別の採番体系**として「Phase 1〜4」（本節限定�
 - **Phase 4（凍結中）**: Fact/Observation層に基づくHypothesisの本格登録・検証開始。
   `HYPOTHESIS_POLICY.md`の凍結規定により、Phase 2・Phase 3のデータ品質確認が完了するまで着手しない。
 
+## Data Expansion / Validation Phase（2026-08-15追加、横断的な基盤整備フェーズ）
+
+Phase R0-R9とは**別枠の横断フェーズ**として追加する（既存Phase番号は振り直さない）。
+詳細は`research/DATA_EXPANSION_PHASE.md`。
+
+### 位置づけ
+
+`EXP-008`〜`EXP-010`（H006）の検証を通じ、**期間差による結果変動（無改造EAの全体PFで0.76〜1.17）が、
+これまで発見した最良の処理効果（買い期待値R +0.02〜+0.06）を大きく上回る**ことが判明した。
+この状態では新しいロジックを探索しても効果とノイズを区別できないため、
+Entry/Exitロジックの探索を一時停止し、検証可能性そのものを整備する。
+
+### Phase R2（データ品質基盤）・Phase R6（ウォークフォワード検証）との関係
+
+本フェーズは Phase R2 と Phase R6 の**前提条件を実データで満たすための具体化**にあたる。
+Phase R2/R6を置き換えるものではなく、それらを実行可能にするための準備である。
+
+### 完了条件（9項目）
+
+1. 長期データを利用可能にする
+2. Layer A / Layer B を分離する
+3. 新Data Epochでのベースラインを確立する
+4. Data Source Variability を測定する（`DIAG-DATA-001`）
+5. Temporal / Regime Variability を測定する（`DIAG-DATA-002`）
+6. Walk-Forward を実行可能にする
+7. Final Holdout を保護する
+8. Hypothesis Adaptation History を追跡可能にする
+9. Effect Size が検出可能な水準かを評価可能にする
+
+**本フェーズの目的はPF改善ではない。**
+
+### 本フェーズ中の凍結
+
+H004〜H007の追加最適化、新規Entry Filter、Market Structure / FVG / Order Block / Liquidity の追加、
+Exit最適化を停止する。既存Evidenceは保持する。
+
+
 ## 既存のEA開発（Phase1-9, `USDJPY_LowRisk_Trend_EA.mq4`）との関係
 
 既存EAのPhase番号（Phase1-9、`trading-system/mt4/`側の開発）と、本ロードマップのPhase R0-R9は
