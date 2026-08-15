@@ -14,6 +14,31 @@
 
 各バージョンの正式な記録(バックテスト結果・比較レポート)は `releases/vX.Y.Z/` に保存する。
 
+## 開発中: トレンド成熟度フィルター・買いのみ (`EXP-008`検証用)
+
+ブランチ `claude/ea-trend-maturity-filter`（基点: `claude/ea-v0.3.0-risk-management`、Phase5-1込み）。
+**コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。** `trading-system/research/hypotheses/HYPOTHESIS_REGISTRY.md`
+のH006、`trading-system/research/experiments/EXP-008_trend_maturity_buy_filter.md`の事前登録に基づく実装。
+決済条件・ロット計算・Phase5-1のリスク管理ロジックには変更なし。売りエントリー条件も無変更。
+
+### 変更点 (`mt4/USDJPY_LowRisk_Trend_EA.mq4`)
+
+- 新規入力パラメータ`MaxBuyTrendDurationBars`(デフォルト0=無効)を追加
+- 新規関数`GetTrendDurationBars(direction, startShift)`を追加。`startShift`から遡り、
+  `GetTrendDirection()`が指定方向と同一の値を返し続けているバー数を数える
+  （`analysis/loss_regime_classification.py`の`compute_trend_duration()`と同一ロジック）
+- `CheckBuySignal()`の末尾に、既存の全シグナル判定が真になった後の最終チェックとして
+  `if(MaxBuyTrendDurationBars>0 && GetTrendDurationBars(1,1)>MaxBuyTrendDurationBars) return false;`
+  を追加。**`CheckSellSignal()`は無変更**（`O-006`で売りには同様の効果が見られなかったため）
+- `OnInit`の初期化ログに、本フィルターの設定値を出力するよう追加
+
+### 既知の制約
+
+- コンパイル確認はユーザー環境のMetaEditorで実施が必要(このセッションではMQL4コンパイラを
+  実行できないため、手動コードレビューのみ実施)
+- `EXP-008`の検証設定値(`MaxBuyTrendDurationBars=50`)はストラテジーテスターの入力パラメータ
+  として都度指定するものであり、コンパイル済みデフォルト値(0=無効)としては変更していない
+
 ## v0.3.0 (開発中: Phase5-1 日次損失上限・連敗制限)
 
 ブランチ `claude/ea-v0.3.0-risk-management`。**コンパイル確認・バックテスト検証待ちのため未タグ・未リリース。**

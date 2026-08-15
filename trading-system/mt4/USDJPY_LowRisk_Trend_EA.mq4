@@ -50,6 +50,9 @@ input double MaxStopLossPips        = 100.0; // 最大損切り幅(pips)
 input int    ADXPeriod              = 14;    // ADX期間
 input double MinimumADX             = 20.0;  // エントリーに必要な最低ADX値
 
+// --- トレンド成熟度フィルター (買いのみ、H006/EXP-008) ---
+input int    MaxBuyTrendDurationBars = 0;    // 買いエントリー判定時、GetTrendDirection()と同一条件が連続成立していたバー数の上限(0=無効)
+
 // --- 押し目/戻り判定 ---
 input int    PullbackLookbackBars   = 5;     // 接触判定に遡る本数(shift=1を含む)
 input double PullbackTolerancePips  = 3.0;   // 20EMA中心の接触許容帯(±pips)
@@ -197,6 +200,8 @@ bool ValidateInputs()
 
    if(ADXPeriod<1) { LogError("ADXPeriodは1以上にしてください"); ok=false; }
    if(MinimumADX<0 || MinimumADX>100) { LogError("MinimumADXは0〜100の範囲にしてください"); ok=false; }
+
+   if(MaxBuyTrendDurationBars<0) { LogError("MaxBuyTrendDurationBarsは0以上にしてください"); ok=false; }
 
    if(PullbackLookbackBars<1) { LogError("PullbackLookbackBarsは1以上にしてください"); ok=false; }
    if(PullbackTolerancePips<0) { LogError("PullbackTolerancePipsは0以上にしてください"); ok=false; }
@@ -354,6 +359,24 @@ int GetTrendDirection(int shift)
    return 0;
 }
 
+// startShiftから遡り、GetTrendDirection()がdirectionと同一の値を返し続けているバー数を数える
+// (H006/EXP-008、トレンド成熟度フィルター用)。analysis/loss_regime_classification.pyの
+// compute_trend_duration()と同一ロジック。上限MaxBuyTrendDurationBarsを大きく超えても
+// カウントを継続する必要はないため、実用上十分な上限(500)で打ち切る。
+int GetTrendDurationBars(int direction, int startShift)
+{
+   int count = 0;
+   int shift = startShift;
+   int hardLimit = 500;
+   while(count < hardLimit)
+   {
+      if(GetTrendDirection(shift) != direction) break;
+      count++;
+      shift++;
+   }
+   return count;
+}
+
 //====================================================================
 // ADXフィルター
 //====================================================================
@@ -461,6 +484,7 @@ bool CheckBuySignal()
    if(GetTrendDirection(1) != 1) return false;
    if(!IsADXStrongEnough(1)) return false;
    if(!CheckPullbackSignal(1)) return false;
+   if(MaxBuyTrendDurationBars>0 && GetTrendDurationBars(1,1)>MaxBuyTrendDurationBars) return false;
    return true;
 }
 
@@ -1295,7 +1319,9 @@ int OnInit()
    EnsureDailyRiskReferenceBalance();
 
    LogInfo("初期化完了。Phase5-2(建値移動/トレーリング)・"
-           + "Phase7(取引時間フィルター)は未実装です。");
+           + "Phase7(取引時間フィルター)は未実装です。"
+           + "トレンド成熟度フィルター(H006/EXP-008)は買いのみMaxBuyTrendDurationBars="
+           + IntegerToString(MaxBuyTrendDurationBars) + "(0=無効)で動作します。");
 
    g_initializedOk = true;
    return INIT_SUCCEEDED;
