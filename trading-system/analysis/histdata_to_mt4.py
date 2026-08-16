@@ -82,13 +82,45 @@ def load_histdata(paths) -> dict:
     return bars, dup, malformed
 
 
-def convert(bars: dict, schedule=None) -> list[str]:
-    out = []
-    for ts in sorted(bars):
-        o, h, l, c, v = bars[ts]
-        shifted = ts + timedelta(hours=offset_for(ts, schedule))
-        out.append(f"{shifted:%Y.%m.%d},{shifted:%H:%M},{o:.3f},{h:.3f},{l:.3f},{c:.3f},{v}")
-    return out
+TIMEFRAMES = {"M1": 1, "M5": 5, "M15": 15, "M30": 30, "H1": 60}
+
+
+def shift_bars(bars: dict, schedule=None) -> dict:
+    """HistData時刻のバーを、MT4時刻に変換したdictへ写す。"""
+    return {ts + timedelta(hours=offset_for(ts, schedule)): v for ts, v in bars.items()}
+
+
+def aggregate(shifted: dict, minutes: int) -> dict:
+    """MT4時刻のM1バーを、指定分数の上位足へ機械的に再集約する。
+
+    O=バケット内で最も早いM1のOpen, H=最大High, L=最小Low, C=最も遅いM1のClose,
+    V=合計。空バケットは生成しない（MT4の実データも無取引時間帯はバーを持たないため）。
+    """
+    if minutes == 1:
+        return dict(shifted)
+    out = {}
+    for ts in sorted(shifted):
+        o, h, l, c, v = shifted[ts]
+        key = ts.replace(minute=(ts.minute // minutes) * minutes, second=0, microsecond=0)
+        cur = out.get(key)
+        if cur is None:
+            out[key] = [ts, o, h, l, ts, c, v]
+        else:
+            if ts < cur[0]:
+                cur[0], cur[1] = ts, o
+            if h > cur[2]:
+                cur[2] = h
+            if l < cur[3]:
+                cur[3] = l
+            if ts > cur[4]:
+                cur[4], cur[5] = ts, c
+            cur[6] += v
+    return {k: (v[1], v[2], v[3], v[5], v[6]) for k, v in out.items()}
+
+
+def to_lines(bars: dict) -> list[str]:
+    return [f"{t:%Y.%m.%d},{t:%H:%M},{o:.3f},{h:.3f},{l:.3f},{c:.3f},{v}"
+            for t, (o, h, l, c, v) in sorted(bars.items())]
 
 
 def main():
@@ -96,24 +128,35 @@ def main():
 
     ap = argparse.ArgumentParser(description="HistData ASCII M1 -> MT4取り込み用CSV変換")
     ap.add_argument("inputs", nargs="+", help="DAT_ASCII_USDJPY_M1_YYYYMM.csv")
-    ap.add_argument("-o", "--output", required=True, help="出力CSVパス")
+    ap.add_argument("-d", "--outdir", required=True, help="出力ディレクトリ")
+    ap.add_argument("--prefix", default="USDJPY", help="出力ファイル名の接頭辞")
+    ap.add_argument("--timeframes", default="M1,M5,M15,M30,H1",
+                    help="生成する時間足（カンマ区切り）")
     args = ap.parse_args()
 
     bars, dup, malformed = load_histdata(args.inputs)
-    lines = convert(bars)
-
-    with open(args.output, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines) + "\n")
-
     ts = sorted(bars)
     print(f"入力ファイル数: {len(args.inputs)}")
-    print(f"読み込みバー数: {len(bars)}（重複除去: {dup}件、不正行: {malformed}件）")
+    print(f"重複除去前: {len(bars) + dup}行 / 除去後: {len(bars)}行"
+          f"（完全重複 {dup}件を1件に一意化、不正行 {malformed}件）")
     print(f"HistData時刻範囲: {ts[0]} .. {ts[-1]}")
-    first = ts[0] + timedelta(hours=offset_for(ts[0]))
-    last = ts[-1] + timedelta(hours=offset_for(ts[-1]))
-    print(f"変換後(MT4時刻)範囲: {first} .. {last}")
-    print(f"適用オフセット: {OFFSET_SCHEDULE}")
-    print(f"出力: {args.output}（{len(lines)}行）")
+
+    shifted = shift_bars(bars)
+    st = sorted(shifted)
+    print(f"MT4時刻範囲     : {st[0]} .. {st[-1]}")
+    print(f"適用オフセット  : {OFFSET_SCHEDULE}\n")
+
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    for tf in [t.strip() for t in args.timeframes.split(",") if t.strip()]:
+        if tf not in TIMEFRAMES:
+            raise SystemExit(f"未知の時間足: {tf}")
+        agg = aggregate(shifted, TIMEFRAMES[tf])
+        lines = to_lines(agg)
+        path = outdir / f"{args.prefix}_{tf}_MT4import.csv"
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        k = sorted(agg)
+        print(f"{tf:>3}: {len(lines):>6}本  {k[0]} .. {k[-1]}  -> {path.name}")
 
 
 if __name__ == "__main__":
